@@ -1,0 +1,90 @@
+body {
+    background: #222D32;
+    font-family: 'Roboto', sans-serif;
+    color: white;
+}
+
+.login-box {
+    margin-top: 75px;
+    background: #1A2226;
+    text-align: center;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+    border-radius: 20px;
+}
+
+.key {
+    width: 100px;
+    margin-top: 15px;
+}
+
+.login-title {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 30px;
+    letter-spacing: 2px;
+    font-weight: bold;
+    color: #ECF0F5;
+}
+
+.login-form {
+    text-align: left;
+}
+
+.form-control, .role-select-form {
+    background-color: #1A2226 !important;
+    border: none;
+    border-bottom: 2px solid #0DB8DE;
+    border-radius: 0;
+    font-weight: bold;
+    color: #ECF0F5 !important;
+    padding-left: 0;
+    box-shadow: none !important;
+}
+
+.form-control:focus {
+    border-bottom: 2px solid #0DB8DE;
+}
+
+.form-control-label {
+    font-size: 10px;
+    color: #6C6C6C;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.login-btn {
+    border-color: #0DB8DE;
+    color: #0DB8DE;
+    border-radius: 0px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+    padding: 8px 30px;
+}
+
+.login-btn:hover {
+    background-color: #0DB8DE;
+    color: #fff;
+}
+
+.register-text {
+    color: #A2A4A4;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s ease-in-out;
+}
+
+.register-text:hover {
+    color: #0DB8DE;
+}
+
+.instructor-buttons {
+    display: flex;
+    justify-content: center;
+    text-align: center;
+}
+
+.instructor-buttons > Button {
+    margin: 100px;
+    padding-inline: 50px;
+}
