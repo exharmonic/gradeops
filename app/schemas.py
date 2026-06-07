@@ -14,6 +14,10 @@ class UserResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
 class ExamCreate(BaseModel):
     title: str
     rubric: Dict[str, Any]
@@ -30,8 +34,8 @@ class SubmissionResponse(BaseModel):
     student_roll_no: str
     pdf_path: str
     image_path: str
-    ai_score: Optional[int] = None           # Optional because it starts empty
-    ai_justification: Optional[str] = None   # Optional because it starts empty
+    ai_score: Optional[int] = None
+    ai_justification: Optional[str] = None
     status: str
     exam_id: int
 

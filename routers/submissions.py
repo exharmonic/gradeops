@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException, status
 import app.models as models
-from app.oauth2 import get_current_user
+from app.auth import get_current_user
 from typing import Annotated, List
 from app.database import get_db
 from sqlalchemy.orm import Session
@@ -74,18 +74,16 @@ def upload_files(
 
             with open(pdf_destination, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
+            file.file.close()
             created_pdf_paths.append(pdf_destination)
 
             os.makedirs(imgs_destination, exist_ok=True)
-            doc = pymupdf.open(pdf_destination)
-            print(doc.metadata)
-            for page in doc:
-                pix = page.get_pixmap(dpi=150)
-                pix.save(f"{imgs_destination}/page-{page.number}.png")
+            with pymupdf.open(pdf_destination) as doc:
+                for page in doc:
+                    pix = page.get_pixmap(dpi=150)
+                    pix.save(f"{imgs_destination}/page-{page.number}.png")
 
             created_img_dirs.append(imgs_destination)
-            doc.close()
-
             saved_submissions.append(student_id)
         
         db.commit()

@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import exams, auth, login, submissions, users
+from routers import exams, login, register, submissions, users
 from app.database import engine
 from app import models
 
@@ -19,7 +19,7 @@ app.add_middleware(
 )
 
 app.include_router(exams.router)
-app.include_router(auth.router)
+app.include_router(register.router)
 app.include_router(login.router)
 app.include_router(submissions.router)
 app.include_router(users.router)

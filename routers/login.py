@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from app.database import get_db
 from sqlalchemy.orm import Session
-from fastapi.security import OAuth2PasswordRequestForm
 import app.models as models
 from app.utils import verify_password
-from app.oauth2 import create_access_token
+from app.auth import create_access_token
+import app.schemas as schemas
+import os
+
+EXPIRY = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
 
 router = APIRouter(
     prefix="/login",
@@ -13,10 +16,11 @@ router = APIRouter(
 
 @router.post("/")
 async def login(
-    user_credentials: OAuth2PasswordRequestForm = Depends(),
+    response: Response,
+    user_credentials: schemas.UserLogin,
     db: Session = Depends(get_db)
 ):
-    user = db.query(models.User).filter(models.User.email == user_credentials.username).first()
+    user = db.query(models.User).filter(models.User.email == user_credentials.email).first()
 
     if user is None:
         raise HTTPException(
@@ -33,11 +37,19 @@ async def login(
         )
 
     access_token = create_access_token({"id": user.id})
-
-    return {
-                "access_token": access_token,
-                "token_type": "bearer",
-                "role": user.role
-            }
-
     
+    expire_minutes = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
+    cookie_max_age = expire_minutes * 60
+
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=cookie_max_age
+    )
+    
+    return {
+        "message" : "Login successful!"
+    }
