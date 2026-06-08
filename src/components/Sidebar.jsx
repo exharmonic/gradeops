@@ -5,9 +5,9 @@ import T, { SPRING, SPRING_LG } from "../tokens";
 import { MagBtn } from "./ui";
 import { UserContext } from "../context/UserContext";
 
-/* ══════════════════════════════════════════════════════════════
+/* 
    INLINE SVG ICONS
-══════════════════════════════════════════════════════════════ */
+ */
 const Icons = {
   Logo: () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -88,9 +88,9 @@ const Icons = {
   ),
 };
 
-/* ══════════════════════════════════════════════════════════════
+/* 
    NAV DEFINITIONS
-══════════════════════════════════════════════════════════════ */
+ */
 const INSTRUCTOR_NAV = [
   { label: "Overview",  icon: Icons.Overview,    path: "/instructor"          },
   { label: "Exams",     icon: Icons.Exams,       path: "/instructor/exams"    },
@@ -108,9 +108,9 @@ const TA_NAV = [
   { label: "Settings",     icon: Icons.Settings,    path: "/ta/settings"  },
 ];
 
-/* ══════════════════════════════════════════════════════════════
+/* 
    ANIMATION VARIANTS
-══════════════════════════════════════════════════════════════ */
+ */
 const sidebarVariant = {
   hidden:  { x: -20, opacity: 0 },
   visible: { x: 0,   opacity: 1, transition: { ...SPRING_LG } },
@@ -132,15 +132,15 @@ const drawerVariant = {
   exit:    { x: -220, transition: { ...SPRING } },
 };
 
-/* ══════════════════════════════════════════════════════════════
+/* 
    HELPERS
-══════════════════════════════════════════════════════════════ */
+ */
 const initials  = (email = "") => email[0]?.toUpperCase() ?? "?";
 const truncate  = (str = "", n = 18) => str.length > n ? str.slice(0, n) + "…" : str;
 
-/* ══════════════════════════════════════════════════════════════
+/* 
    NAV ITEM
-══════════════════════════════════════════════════════════════ */
+ */
 function NavItem({ item, active, collapsed, onClick }) {
   const isActive = active === item.path;
   const Icon     = item.icon;
@@ -215,9 +215,9 @@ function NavItem({ item, active, collapsed, onClick }) {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* 
    SIDEBAR INNER CONTENT
-══════════════════════════════════════════════════════════════ */
+ */
 function SidebarContent({ collapsed, activeRoute, onNavigate, onClose }) {
   const navigate        = useNavigate();
   const { user, logout } = useContext(UserContext);
@@ -445,9 +445,9 @@ function SidebarContent({ collapsed, activeRoute, onNavigate, onClose }) {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* 
    SIDEBAR (exported)
-══════════════════════════════════════════════════════════════ */
+ */
 export default function Sidebar({ activeRoute, onNavigate }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [screenW,    setScreenW]    = useState(

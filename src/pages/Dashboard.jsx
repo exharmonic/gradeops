@@ -6,9 +6,10 @@ import { UserContext } from "../context/UserContext";
 
 export default function Dashboard() {
   const navigate   = useNavigate();
-  const { user }   = useContext(UserContext);
+  const { user, loading }   = useContext(UserContext);
 
   useEffect(() => {
+    if (loading) return;
     const timer = setTimeout(() => {
       if (!user || !["instructor", "ta"].includes(user.role)) {
         navigate("/login", { replace: true });
@@ -17,7 +18,7 @@ export default function Dashboard() {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [user, navigate]);
+  }, [user, navigate, loading]);
 
   return (
     <div style={{

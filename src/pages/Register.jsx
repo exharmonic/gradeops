@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import T, { SPRING } from "../tokens";
 import { MagBtn, FLInput, FLSelect, LoadingSpinner, Dot } from "../components/ui";
 import { UserContext } from "../context/UserContext";
+import api from "../services/api";
 
-/* ─── inline SVGs ───────────────────────────────────────────── */
 const IconLogo = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
     <rect x="3" y="3" width="18" height="18" rx="4" fill={T.cyan} />
@@ -27,7 +27,6 @@ const IconCheck = () => (
   </svg>
 );
 
-/* ─── pipeline steps for right panel ───────────────────────── */
 const PIPELINE_STEPS = [
   { label: "Upload",    sub: "Bulk PDF ingestion & rubric JSON",       color: T.cyan    },
   { label: "OCR",       sub: "Vision model handwriting extraction",     color: T.emerald },
@@ -41,7 +40,6 @@ const ROLE_OPTIONS = [
   { value: "ta",         label: "Teaching Assistant (TA)" },
 ];
 
-/* ─── password strength ─────────────────────────────────────── */
 function getStrength(pw) {
   if (!pw)        return { level: 0, label: "",           color: T.border    };
   if (pw.length < 6)  return { level: 1, label: "Weak",   color: T.red       };
@@ -50,7 +48,6 @@ function getStrength(pw) {
   return               { level: 4, label: "Very strong",  color: T.emerald   };
 }
 
-/* ─── animation variants ────────────────────────────────────── */
 const fadeUp = (delay = 0) => ({
   hidden:  { opacity: 0, y: 18 },
   visible: { opacity: 1, y: 0, transition: { ...SPRING, delay } },
@@ -82,9 +79,6 @@ const fieldErrorVariant = {
   exit:    { opacity: 0, y: -4, height: 0,   transition: { duration: 0.14 } },
 };
 
-/* ══════════════════════════════════════════════════════════════
-   REGISTER PAGE
-══════════════════════════════════════════════════════════════ */
 export default function Register() {
   const navigate        = useNavigate();
   const { user }        = useContext(UserContext);
@@ -100,17 +94,14 @@ export default function Register() {
     typeof window !== "undefined" && window.innerWidth < 768
   );
 
-  /* per-field errors */
   const [errors, setErrors] = useState({
     email: "", password: "", confirm: "", role: "",
   });
 
-  /* redirect if already logged in */
   useEffect(() => {
-    if (user) navigate(user.role === "instructor" ? "/instructor" : "/ta", { replace: true });
+    if (user?.role) navigate(user.role === "instructor" ? "/instructor" : "/ta", { replace: true });
   }, [user, navigate]);
 
-  /* resize listener */
   useEffect(() => {
     const handler = () => setIsNarrow(window.innerWidth < 768);
     window.addEventListener("resize", handler);
@@ -119,7 +110,6 @@ export default function Register() {
 
   const strength = getStrength(password);
 
-  /* ── client-side validation ── */
   const validate = () => {
     const e = { email: "", password: "", confirm: "", role: "" };
     let ok = true;
@@ -149,32 +139,29 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const res  = await fetch("/api/auth/register", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ email, password, role }),
+      const response  = await api.post('/register', {
+        email: email,
+        password: password,
+        role: role
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Registration failed");
 
       setSuccess(true);
       setTimeout(() => {
         navigate("/login", { state: { registered: true } });
-      }, 700);
+      }, 600);
     } catch (err) {
-      setApiError(err.message);
+      setApiError(err.response?.data?.detail || "Registration failed");
+      console.log(err)
     } finally {
       setLoading(false);
     }
   };
 
-  /* clear field error on change */
   const field = (setter, key) => (e) => {
     setter(e.target.value);
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: "" }));
   };
 
-  /* ── styles ── */
   const S = {
     root: {
       display:         "flex",
@@ -184,7 +171,6 @@ export default function Register() {
       overflow:        "hidden",
     },
 
-    /* LEFT — form panel */
     left: {
       flex:            1,
       display:         "flex",
@@ -238,7 +224,6 @@ export default function Register() {
       marginBottom:   "24px",
     },
 
-    /* password strength bar */
     strengthWrap: {
       marginTop:      "8px",
       display:        "flex",
@@ -258,7 +243,6 @@ export default function Register() {
       transition:     "color 0.3s",
     },
 
-    /* field error */
     fieldError: {
       fontSize:       "12px",
       color:          T.red,
@@ -267,7 +251,6 @@ export default function Register() {
       overflow:       "hidden",
     },
 
-    /* instructor info box */
     infoBox: {
       display:         "flex",
       alignItems:      "flex-start",
@@ -283,7 +266,6 @@ export default function Register() {
       overflow:        "hidden",
     },
 
-    /* api error box */
     apiErrorBox: {
       display:         "flex",
       alignItems:      "center",
@@ -315,7 +297,6 @@ export default function Register() {
       fontWeight:     600,
     },
 
-    /* RIGHT — decorative pipeline panel */
     right: {
       flex:            "0 0 45%",
       position:        "relative",
@@ -358,7 +339,6 @@ export default function Register() {
       zIndex:          1,
     },
 
-    /* pipeline */
     pipelineWrap: {
       position:        "relative",
       zIndex:          1,
@@ -404,7 +384,6 @@ export default function Register() {
     },
   };
 
-  /* ── strength bar segments ── */
   const StrengthBar = () => (
     <div style={S.strengthWrap}>
       <div style={S.strengthTrack}>
@@ -436,7 +415,6 @@ export default function Register() {
     </div>
   );
 
-  /* ── per-field error ── */
   const FieldError = ({ msg }) => (
     <AnimatePresence>
       {msg && (
@@ -456,7 +434,6 @@ export default function Register() {
   return (
     <div style={S.root}>
 
-      {/* ══ LEFT — FORM PANEL ══ */}
       <div style={S.left}>
         <motion.div
           style={S.card}
@@ -464,7 +441,6 @@ export default function Register() {
           initial="hidden"
           animate="visible"
         >
-          {/* logo */}
           <div style={S.cardLogoRow}>
             <IconLogo />
             <span style={S.cardLogoText}>GradeOps</span>
@@ -475,7 +451,6 @@ export default function Register() {
 
           <form onSubmit={handleSubmit} noValidate>
 
-            {/* fields */}
             <motion.div
               style={S.fieldsWrap}
               variants={staggerContainer}
@@ -483,7 +458,6 @@ export default function Register() {
               animate="visible"
             >
 
-              {/* email */}
               <motion.div variants={fieldVariant}>
                 <FLInput
                   id="email"
@@ -497,7 +471,6 @@ export default function Register() {
                 <FieldError msg={errors.email} />
               </motion.div>
 
-              {/* password + strength */}
               <motion.div variants={fieldVariant}>
                 <FLInput
                   id="password"
@@ -511,8 +484,7 @@ export default function Register() {
                 <StrengthBar />
                 <FieldError msg={errors.password} />
               </motion.div>
-
-              {/* confirm password */}
+              
               <motion.div variants={fieldVariant}>
                 <FLInput
                   id="confirm"
@@ -526,7 +498,7 @@ export default function Register() {
                 <FieldError msg={errors.confirm} />
               </motion.div>
 
-              {/* role select */}
+
               <motion.div variants={fieldVariant}>
                 <FLSelect
                   id="role"
@@ -544,7 +516,6 @@ export default function Register() {
 
             </motion.div>
 
-            {/* instructor info box */}
             <AnimatePresence>
               {role === "instructor" && (
                 <motion.div
@@ -565,7 +536,6 @@ export default function Register() {
               )}
             </AnimatePresence>
 
-            {/* api error */}
             <AnimatePresence>
               {apiError && (
                 <motion.div
@@ -585,7 +555,6 @@ export default function Register() {
               )}
             </AnimatePresence>
 
-            {/* submit */}
             <motion.div
               style={{ marginTop: "8px" }}
               animate={success ? { scale: [1, 0.97, 1] } : {}}
@@ -623,7 +592,6 @@ export default function Register() {
 
           </form>
 
-          {/* sign in link */}
           <div style={S.signInRow}>
             Already have an account?{" "}
             <motion.button
@@ -640,7 +608,6 @@ export default function Register() {
         </motion.div>
       </div>
 
-      {/* ══ RIGHT — PIPELINE PANEL ══ */}
       {!isNarrow && (
         <div style={S.right}>
           <div style={S.rightGlow} />
@@ -663,7 +630,6 @@ export default function Register() {
           >
             {PIPELINE_STEPS.map((step, i) => (
               <motion.div key={step.label} style={S.stepRow} variants={stepVariant}>
-                {/* left: dot + line */}
                 <div style={S.stepLeft}>
                   <Dot color={step.color} />
                   {i < PIPELINE_STEPS.length - 1 && (
@@ -671,7 +637,6 @@ export default function Register() {
                   )}
                 </div>
 
-                {/* content */}
                 <div style={S.stepContent}>
                   <div style={S.stepLabel}>{step.label}</div>
                   <div style={S.stepSub}>{step.sub}</div>

@@ -1,15 +1,7 @@
-/* ─────────────────────────────────────────────
-   src/components/ui.jsx
-   Shared micro-components used across all pages.
-   Import individually:
-     import { MagBtn, Dot, FLInput, FLSelect } from './ui'
-───────────────────────────────────────────── */
-
 import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import T, { EASE_EXPO, SPRING } from "../tokens";
 
-/* ── Pulsing status dot ── */
 export function Dot({ color }) {
   return (
     <span style={{ position: "relative", display: "inline-flex", width: 7, height: 7, flexShrink: 0 }}>
@@ -23,7 +15,6 @@ export function Dot({ color }) {
   );
 }
 
-/* ── Arrow icon ── */
 export function Arrow() {
   return (
     <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
@@ -32,8 +23,7 @@ export function Arrow() {
   );
 }
 
-/* ── Magnetic button ── */
-export function MagBtn({ children, onClick, variant = "primary", size = "md", type = "button" }) {
+export function MagBtn({ children, onClick, variant = "primary", size = "md", type = "button", style }) {
   const ref = useRef();
   const [pos, setPos] = useState({ x: 0, y: 0 });
 
@@ -67,7 +57,7 @@ export function MagBtn({ children, onClick, variant = "primary", size = "md", ty
     <motion.button
       ref={ref}
       type={type}
-      style={{ ...vs[variant], x: pos.x, y: pos.y }}
+      style={{ ...vs[variant], ...style, x: pos.x, y: pos.y }}
       onMouseMove={onMove}
       onMouseLeave={onLeave}
       onClick={onClick}
@@ -80,7 +70,6 @@ export function MagBtn({ children, onClick, variant = "primary", size = "md", ty
   );
 }
 
-/* ── Loading spinner ── */
 export function LoadingSpinner() {
   return (
     <motion.div
@@ -91,7 +80,6 @@ export function LoadingSpinner() {
   );
 }
 
-/* ── Floating label text input ── */
 export function FLInput({ id, label, type = "text", value, onChange, required, autoComplete }) {
   const [focused, setFocused] = useState(false);
   const lifted = focused || value.length > 0;
@@ -139,18 +127,16 @@ export function FLInput({ id, label, type = "text", value, onChange, required, a
   );
 }
 
-/* ── Floating label custom select (dropdown) ── */
 export function FLSelect({ id, label, value, onChange, required, options }) {
   const [open, setOpen] = useState(false);
   const ref = useRef();
   const lifted = open || value.length > 0;
   const selected = options.find((o) => o.value === value);
 
-  // Close on outside click
   const handleOutside = (e) => {
     if (ref.current && !ref.current.contains(e.target)) setOpen(false);
   };
-  // Use effect to add/remove listener
+
   useState(() => {
     document.addEventListener("mousedown", handleOutside);
     return () => document.removeEventListener("mousedown", handleOutside);
@@ -203,7 +189,6 @@ export function FLSelect({ id, label, value, onChange, required, options }) {
         {selected?.label ?? ""}
       </button>
 
-      {/* Chevron */}
       <motion.svg
         animate={{ rotate: open ? 180 : 0 }}
         transition={{ duration: 0.2, ease: EASE_EXPO }}
@@ -213,7 +198,6 @@ export function FLSelect({ id, label, value, onChange, required, options }) {
         <path d="M3 5l4 4 4-4" stroke={T.text2} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </motion.svg>
 
-      {/* Dropdown */}
       <AnimatePresence>
         {open && (
           <motion.div

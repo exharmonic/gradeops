@@ -1,9 +1,3 @@
-/* ─────────────────────────────────────────────
-   src/pages/Home.jsx
-   Full landing page: Hero → Features → Auth → Footer
-   Replaces the old monolithic App.jsx body.
-───────────────────────────────────────────── */
-
 import { useRef, useState, useEffect, Suspense, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Points, PointMaterial } from "@react-three/drei";
@@ -15,16 +9,13 @@ import {
   useInView,
 } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-
+import api from "../services/api";
 import T, { EASE_EXPO, SPRING, SPRING_LG } from "../tokens";
 import { MagBtn, Dot, Arrow, LoadingSpinner, FLInput, FLSelect } from "../components/ui";
 
-/* ─────────────────────────────────────────────
-   NAV
-───────────────────────────────────────────── */
 function Nav({ onAuth }) {
   const { scrollY } = useScroll();
-  const bg  = useTransform(scrollY, [0, 60], ["rgba(6,8,10,0)", "rgba(6,8,10,0.88)"]);
+  const bg = useTransform(scrollY, [0, 60], ["rgba(6,8,10,0)", "rgba(6,8,10,0.88)"]);
   const bdr = useTransform(scrollY, [0, 60], ["rgba(255,255,255,0)", T.border]);
   const navigate = useNavigate();
 
@@ -41,7 +32,7 @@ function Nav({ onAuth }) {
         padding: "0 clamp(20px,5vw,80px)", height: 52,
         display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
-        {/* Logo */}
+
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
           style={{ display: "flex", alignItems: "center", gap: 9, cursor: "pointer" }}
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
@@ -53,7 +44,6 @@ function Nav({ onAuth }) {
           <span style={{ fontSize: 15, fontWeight: 700, color: T.text1, letterSpacing: "-0.025em" }}>GradeOps</span>
         </motion.div>
 
-        {/* Right actions */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
           style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{
@@ -69,9 +59,6 @@ function Nav({ onAuth }) {
   );
 }
 
-/* ─────────────────────────────────────────────
-   3D SCENE
-───────────────────────────────────────────── */
 function Particles({ count = 2800 }) {
   const ref = useRef();
   const mouse = useRef([0, 0]);
@@ -82,7 +69,7 @@ function Particles({ count = 2800 }) {
       const r = Math.cbrt(Math.random()) * 15;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
-      p[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
+      p[i * 3] = r * Math.sin(phi) * Math.cos(theta);
       p[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
       p[i * 3 + 2] = r * Math.cos(phi);
     }
@@ -152,13 +139,10 @@ function Scene3D() {
   );
 }
 
-/* ─────────────────────────────────────────────
-   HERO
-───────────────────────────────────────────── */
 function HeroPanel({ children, scrollRef }) {
   const { scrollYProgress } = useScroll({ target: scrollRef, offset: ["start start", "end start"] });
   const opacity = useTransform(scrollYProgress, [0, 0.22, 0.72, 1], [0, 1, 1, 0]);
-  const y       = useTransform(scrollYProgress, [0, 0.22], [36, 0]);
+  const y = useTransform(scrollYProgress, [0, 0.22], [36, 0]);
 
   return (
     <motion.div style={{
@@ -182,11 +166,10 @@ function Hero({ onAuth }) {
 
   const { scrollYProgress: p1Progress } = useScroll({ target: phase1Ref, offset: ["start start", "end start"] });
   const p1Opacity = useTransform(p1Progress, [0.7, 1], [1, 0]);
-  const p1Y       = useTransform(p1Progress, [0.7, 1], [0, -24]);
+  const p1Y = useTransform(p1Progress, [0.7, 1], [0, -24]);
 
   return (
     <>
-      {/* Fixed 3D background */}
       <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
         <Canvas camera={{ position: [0, 0, 8], fov: 55 }} dpr={[1, 1.5]} gl={{ antialias: false, powerPreference: "high-performance" }}>
           <Scene3D />
@@ -194,7 +177,6 @@ function Hero({ onAuth }) {
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 75% 85% at 40% 50%, transparent 0%, rgba(6,8,10,0.82) 100%)" }} />
       </div>
 
-      {/* Phase 1: Hook */}
       <section ref={phase1Ref} style={{ position: "relative", height: "115dvh", zIndex: 1 }}>
         <motion.div style={{
           opacity: p1Opacity, y: p1Y,
@@ -239,7 +221,6 @@ function Hero({ onAuth }) {
         </motion.div>
       </section>
 
-      {/* Phase 2: Brand name */}
       <section ref={phase2Ref} style={{ position: "relative", height: "115dvh", zIndex: 1 }}>
         <HeroPanel scrollRef={phase2Ref}>
           <div style={{ fontSize: 11, fontFamily: "Geist Mono, monospace", color: T.text3, letterSpacing: "0.1em", marginBottom: 28 }}>THE SOLUTION</div>
@@ -249,7 +230,6 @@ function Hero({ onAuth }) {
         </HeroPanel>
       </section>
 
-      {/* Phase 3: Body copy + CTA + stats */}
       <section ref={phase3Ref} style={{ position: "relative", height: "115dvh", zIndex: 1 }}>
         <HeroPanel scrollRef={phase3Ref}>
           <p style={{ fontSize: "clamp(15px,1.7vw,19px)", lineHeight: 1.78, color: T.text2, maxWidth: "56ch", marginBottom: 36 }}>
@@ -264,9 +244,9 @@ function Hero({ onAuth }) {
           </div>
           <div style={{ display: "flex", gap: "clamp(32px,5vw,64px)", flexWrap: "wrap" }}>
             {[
-              { v: "94.7%", l: "OCR extraction accuracy",    c: T.cyan },
-              { v: "11×",   l: "faster than manual grading", c: T.emerald },
-              { v: "2,400+",l: "exams processed in beta",    c: T.text1 },
+              { v: "94.7%", l: "OCR extraction accuracy", c: T.cyan },
+              { v: "11×", l: "faster than manual grading", c: T.emerald },
+              { v: "2,400+", l: "exams processed in beta", c: T.text1 },
             ].map(({ v, l, c }) => (
               <div key={v}>
                 <div style={{ fontFamily: "Geist Mono, monospace", fontSize: "clamp(24px,3vw,36px)", fontWeight: 700, color: c, letterSpacing: "-0.035em", lineHeight: 1 }}>{v}</div>
@@ -280,9 +260,6 @@ function Hero({ onAuth }) {
   );
 }
 
-/* ─────────────────────────────────────────────
-   FEATURE SECTION  (visuals + rows)
-───────────────────────────────────────────── */
 function TerminalVisual() {
   const LOG = [
     "SCAN_PAGE_03.jpg → tokenizer",
@@ -302,7 +279,7 @@ function TerminalVisual() {
   return (
     <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden", boxShadow: `0 24px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)` }}>
       <div style={{ padding: "10px 16px", borderBottom: `1px solid ${T.border}`, display: "flex", alignItems: "center", gap: 7 }}>
-        {["#ff5f57","#febc2e","#28c840"].map(c => <span key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c, opacity: 0.65 }} />)}
+        {["#ff5f57", "#febc2e", "#28c840"].map(c => <span key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c, opacity: 0.65 }} />)}
         <span style={{ marginLeft: 8, fontFamily: "Geist Mono, monospace", fontSize: 11, color: T.text3 }}>gradeops-pipeline</span>
         <Dot color={T.emerald} />
       </div>
@@ -310,14 +287,14 @@ function TerminalVisual() {
         <AnimatePresence>
           {lines.map(idx => (
             <motion.div key={idx} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.24, ease: EASE_EXPO }} style={{ display: "flex", gap: 10 }}>
-              <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: T.text3, minWidth: 20 }}>{String(idx+1).padStart(2,"0")}</span>
-              <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, lineHeight: 1.6, wordBreak: "break-all", color: idx === lines.length-1 ? T.cyan : idx % 3 === 2 ? T.emerald : T.text2 }}>{LOG[idx]}</span>
+              <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: T.text3, minWidth: 20 }}>{String(idx + 1).padStart(2, "0")}</span>
+              <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, lineHeight: 1.6, wordBreak: "break-all", color: idx === lines.length - 1 ? T.cyan : idx % 3 === 2 ? T.emerald : T.text2 }}>{LOG[idx]}</span>
             </motion.div>
           ))}
         </AnimatePresence>
-        <motion.div animate={{ opacity: [1,0,1] }} transition={{ duration: 1, repeat: Infinity }} style={{ width: 5, height: 12, background: T.cyan, borderRadius: 1, marginLeft: 30 }} />
+        <motion.div animate={{ opacity: [1, 0, 1] }} transition={{ duration: 1, repeat: Infinity }} style={{ width: 5, height: 12, background: T.cyan, borderRadius: 1, marginLeft: 30 }} />
       </div>
-      <motion.div animate={{ x: ["-100%","120%"] }} transition={{ duration: 2.8, repeat: Infinity, ease: "linear" }} style={{ height: 1, background: `linear-gradient(90deg, transparent, ${T.cyan}, transparent)`, opacity: 0.5 }} />
+      <motion.div animate={{ x: ["-100%", "120%"] }} transition={{ duration: 2.8, repeat: Infinity, ease: "linear" }} style={{ height: 1, background: `linear-gradient(90deg, transparent, ${T.cyan}, transparent)`, opacity: 0.5 }} />
     </div>
   );
 }
@@ -338,27 +315,27 @@ function ProgressBar({ value, color }) {
 
 function UploadVisual() {
   const [step, setStep] = useState(0);
-  useEffect(() => { const t = setInterval(() => setStep(s => (s+1)%4), 1500); return () => clearInterval(t); }, []);
+  useEffect(() => { const t = setInterval(() => setStep(s => (s + 1) % 4), 1500); return () => clearInterval(t); }, []);
   const msgs = ["Awaiting upload...", "Parsing PDF structure...", "Extracting 32 pages...", "Pages queued — ready"];
   return (
     <MiniCard>
       <CardLabel color={T.cyan}>PDF INGESTION</CardLabel>
       <div style={{ height: 52, position: "relative" }}>
         <AnimatePresence mode="wait">
-          <motion.div key={step} initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-8 }} transition={{ duration: 0.22 }} style={{ fontFamily: "Geist Mono, monospace", fontSize: 12, color: T.cyan, position: "absolute" }}>
+          <motion.div key={step} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }} style={{ fontFamily: "Geist Mono, monospace", fontSize: 12, color: T.cyan, position: "absolute" }}>
             &gt; {msgs[step]}
           </motion.div>
         </AnimatePresence>
       </div>
-      <ProgressBar value={step/3} color={T.cyan} />
+      <ProgressBar value={step / 3} color={T.cyan} />
     </MiniCard>
   );
 }
 
 function RBACVisual() {
   const roles = [
-    { name: "Dr. Adeyemi", tag: "Instructor", perms: ["Edit rubric","Release grades","Audit log"], c: T.cyan },
-    { name: "Priya Krishnamurthy", tag: "TA", perms: ["Review queue","Override"], c: T.emerald },
+    { name: "Dr. Adeyemi", tag: "Instructor", perms: ["Edit rubric", "Release grades", "Audit log"], c: T.cyan },
+    { name: "Priya Krishnamurthy", tag: "TA", perms: ["Review queue", "Override"], c: T.emerald },
   ];
   return (
     <MiniCard>
@@ -381,9 +358,9 @@ function RBACVisual() {
 }
 
 function PipelineVisual() {
-  const stages = ["OCR Extraction","VLM Parsing","Rubric Match","Partial Credit","Justification","Similarity Check"];
+  const stages = ["OCR Extraction", "VLM Parsing", "Rubric Match", "Partial Credit", "Justification", "Similarity Check"];
   const [active, setActive] = useState(0);
-  useEffect(() => { const t = setInterval(() => setActive(a => (a+1)%stages.length), 950); return () => clearInterval(t); }, []);
+  useEffect(() => { const t = setInterval(() => setActive(a => (a + 1) % stages.length), 950); return () => clearInterval(t); }, []);
   return (
     <MiniCard>
       <CardLabel color={T.cyan}>AGENTIC PIPELINE</CardLabel>
@@ -401,7 +378,7 @@ function PipelineVisual() {
 }
 
 function DashboardVisual() {
-  const items = [{ id:"Q3b",status:"approved",score:"8/10"},{id:"Q2a",status:"override",score:"6/10"},{id:"Q4c",status:"pending",score:"—"}];
+  const items = [{ id: "Q3b", status: "approved", score: "8/10" }, { id: "Q2a", status: "override", score: "6/10" }, { id: "Q4c", status: "pending", score: "—" }];
   const sc = { approved: T.emerald, override: "#fbbf24", pending: T.text3 };
   return (
     <MiniCard>
@@ -412,7 +389,7 @@ function DashboardVisual() {
             <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 12, color: T.text1 }}>{item.id}</span>
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
               <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 12, color: T.text2 }}>{item.score}</span>
-              <span style={{ fontSize: 10, fontFamily: "Geist Mono, monospace", color: sc[item.status], background: sc[item.status]+"18", padding: "2px 8px", borderRadius: 4 }}>{item.status}</span>
+              <span style={{ fontSize: 10, fontFamily: "Geist Mono, monospace", color: sc[item.status], background: sc[item.status] + "18", padding: "2px 8px", borderRadius: 4 }}>{item.status}</span>
             </div>
           </div>
         ))}
@@ -422,11 +399,11 @@ function DashboardVisual() {
 }
 
 const FEATURES = [
-  { num:"01", title:"Bulk PDF ingestion & JSON rubrics",  body:"Web portal to upload bulk exam scans (PDFs) and define JSON rubrics. Structured rubric schemas ensure every question's weighting, expected concepts, and partial credit brackets are machine-readable from the start.", accent:T.cyan,    Visual: UploadVisual },
-  { num:"02", title:"Role-Based Access Control",          body:"Instructors own rubric authorship, grade release, and audit logs. TAs operate within a scoped review queue. RBAC is enforced at the API layer — not just the UI.",                                                     accent:T.emerald, Visual: RBACVisual },
-  { num:"03", title:"OCR & Vision model extraction",      body:"Specialized OCR/Vision models extract messy handwritten answers from scanned pages. Multi-column layouts, crossed-out text, and margin annotations are handled as discrete tokens.",                              accent:T.cyan,    Visual: TerminalVisual },
-  { num:"04", title:"Agentic LLM grading pipeline",       body:"Awards partial credit, generates structured justifications, and flags highly similar logic structures for plagiarism. Each decision includes a confidence score and a cited rubric clause.",                           accent:T.emerald, Visual: PipelineVisual },
-  { num:"05", title:"High-throughput review dashboard",   body:"Allows TAs to rapidly review, approve, or override decisions. Keyboard-first design means a trained TA can process a verdict in under four seconds without lifting their hands.",                                    accent:T.cyan,    Visual: DashboardVisual },
+  { num: "01", title: "Bulk PDF ingestion & JSON rubrics", body: "Web portal to upload bulk exam scans (PDFs) and define JSON rubrics. Structured rubric schemas ensure every question's weighting, expected concepts, and partial credit brackets are machine-readable from the start.", accent: T.cyan, Visual: UploadVisual },
+  { num: "02", title: "Role-Based Access Control", body: "Instructors own rubric authorship, grade release, and audit logs. TAs operate within a scoped review queue. RBAC is enforced at the API layer — not just the UI.", accent: T.emerald, Visual: RBACVisual },
+  { num: "03", title: "OCR & Vision model extraction", body: "Specialized OCR/Vision models extract messy handwritten answers from scanned pages. Multi-column layouts, crossed-out text, and margin annotations are handled as discrete tokens.", accent: T.cyan, Visual: TerminalVisual },
+  { num: "04", title: "Agentic LLM grading pipeline", body: "Awards partial credit, generates structured justifications, and flags highly similar logic structures for plagiarism. Each decision includes a confidence score and a cited rubric clause.", accent: T.emerald, Visual: PipelineVisual },
+  { num: "05", title: "High-throughput review dashboard", body: "Allows TAs to rapidly review, approve, or override decisions. Keyboard-first design means a trained TA can process a verdict in under four seconds without lifting their hands.", accent: T.cyan, Visual: DashboardVisual },
 ];
 
 function FeatRow({ f, i }) {
@@ -468,43 +445,69 @@ function Features() {
   );
 }
 
-/* ─────────────────────────────────────────────
-   AUTH SECTION  (inline SPA — no page redirect)
-───────────────────────────────────────────── */
 const SLIDE = {
   initial: d => ({ opacity: 0, x: d * 28, scale: 0.98 }),
   animate: { opacity: 1, x: 0, scale: 1, transition: { ...SPRING } },
-  exit:    d => ({ opacity: 0, x: d * -28, scale: 0.98, transition: { duration: 0.16, ease: [0.4,0,1,1] } }),
+  exit: d => ({ opacity: 0, x: d * -28, scale: 0.98, transition: { duration: 0.16, ease: [0.4, 0, 1, 1] } }),
 };
 
 function AuthSection({ id }) {
   const [mode, setMode] = useState("login");
-  const [dir,  setDir]  = useState(1);
+  const [dir, setDir] = useState(1);
   const [lem, setLem] = useState(""); const [lpw, setLpw] = useState("");
   const [lLoading, setLLoading] = useState(false); const [lOk, setLOk] = useState(false);
   const [rem, setRem] = useState(""); const [rpw, setRpw] = useState("");
   const [rcp, setRcp] = useState(""); const [rol, setRol] = useState("");
   const [rLoading, setRLoading] = useState(false); const [rOk, setROk] = useState(false);
   const [rErr, setRErr] = useState("");
+  const navigate = useNavigate();
 
-  // ── Wire these handlers to your real API calls ──
   const doLogin = async (e) => {
     e.preventDefault();
     setLLoading(true);
-    // TODO: replace with real API call, e.g.:
-    // const res = await fetch('/api/auth/login', { method:'POST', body: JSON.stringify({ email:lem, password:lpw }) })
-    // const data = await res.json()
-    // if (data.token) { login(data); navigate('/dashboard') }
-    setTimeout(() => { setLLoading(false); setLOk(true); }, 1400);
+
+    try {
+      await api.post('/login', {
+        email: lem,
+        password: lpw
+      });
+
+      const response = await api.get('/users/me')
+      const userData = response.data;
+
+      login(userData);
+      setTimeout(() => {
+        navigate(userData.role === "instructor" ? "/instructor" : "/ta");
+      }, 600);
+    } catch (err) {
+      console.log(err);
+    }
+    setTimeout(() => { setLLoading(false); setLOk(true); }, 600);
   };
 
   const doRegister = async (e) => {
     e.preventDefault(); setRErr("");
     if (rpw !== rcp) { setRErr("Passwords do not match."); return; }
     if (!rol) { setRErr("Please select a role."); return; }
+    if (rpw.length() < 6) { setRErr("Password must be at least 6 characters.")}
     setRLoading(true);
-    // TODO: replace with real API call
-    setTimeout(() => { setRLoading(false); setROk(true); }, 1600);
+
+    try {
+      const response = await api.post('/register', {
+        email: rem,
+        password: rpw,
+        role: rol
+      });
+      setTimeout(() => {
+        setROk(true);
+        navigate("/login");
+      }, 600);
+    } catch (error) {
+      setRErr(error.response?.data?.detail || "Registration failed")
+      setROk(false)
+    }
+
+    setTimeout(() => { setRLoading(false) }, 600);
   };
 
   const switchMode = (next) => {
@@ -520,7 +523,7 @@ function AuthSection({ id }) {
     <section id={id} style={{ background: T.bg, padding: "clamp(80px,12vw,140px) 0 clamp(60px,8vw,100px)", position: "relative", zIndex: 10 }}>
       <div style={{ position: "absolute", width: 500, height: 500, background: `radial-gradient(circle, ${T.cyanDim} 0%, transparent 70%)`, left: "50%", top: "50%", transform: "translate(-50%,-50%)", pointerEvents: "none" }} />
       <div ref={ref} style={{ maxWidth: 1280, margin: "0 auto", padding: "0 clamp(24px,6vw,96px)", position: "relative", zIndex: 1 }}>
-        <motion.div initial={{ opacity:0, y:28 }} animate={inView ? { opacity:1, y:0 } : {}} transition={SPRING_LG}
+        <motion.div initial={{ opacity: 0, y: 28 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={SPRING_LG}
           style={{ marginBottom: "clamp(48px,6vw,72px)", textAlign: "center" }}>
           <div style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: T.cyan, letterSpacing: "0.1em", marginBottom: 14, opacity: 0.75 }}>ACCESS</div>
           <h2 style={{ fontSize: "clamp(28px,4vw,48px)", fontWeight: 900, letterSpacing: "-0.045em", color: T.text1, lineHeight: 1.04, marginBottom: 16 }}>
@@ -531,14 +534,13 @@ function AuthSection({ id }) {
           </p>
         </motion.div>
 
-        <motion.div initial={{ opacity:0, y:36 }} animate={inView ? { opacity:1, y:0 } : {}} transition={{ ...SPRING_LG, delay: 0.08 }}
+        <motion.div initial={{ opacity: 0, y: 36 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ ...SPRING_LG, delay: 0.08 }}
           style={{ maxWidth: 480, margin: "0 auto" }}>
           <div style={{ background: T.surface, border: `1px solid ${T.borderMid}`, borderRadius: 20, padding: "clamp(28px,4vw,44px)", boxShadow: `0 40px 80px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)`, position: "relative", overflow: "hidden" }}>
             <div style={{ position: "absolute", top: 0, left: "15%", right: "15%", height: 1, background: `linear-gradient(90deg, transparent, ${T.cyan}, transparent)`, opacity: 0.55 }} />
 
-            {/* Tabs */}
             <div style={{ display: "flex", background: "rgba(255,255,255,0.03)", border: `1px solid ${T.border}`, borderRadius: 10, padding: 3, marginBottom: 28, gap: 3 }}>
-              {["login","register"].map(m => (
+              {["login", "register"].map(m => (
                 <motion.button key={m} onClick={() => switchMode(m)}
                   style={{ flex: 1, padding: "9px 0", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, fontFamily: "Geist, sans-serif", background: "transparent", color: mode === m ? T.text1 : T.text3, position: "relative", outline: "none", transition: "color 0.2s" }}
                   whileTap={{ scale: 0.97 }}>
@@ -548,15 +550,14 @@ function AuthSection({ id }) {
               ))}
             </div>
 
-            {/* Forms */}
             <div style={{ minHeight: mode === "login" ? 240 : 380, position: "relative" }}>
               <AnimatePresence mode="wait" custom={dir}>
                 {mode === "login" && (
                   <motion.form key="login" custom={dir} variants={SLIDE} initial="initial" animate="animate" exit="exit" onSubmit={doLogin} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    <FLInput id="l-em" label="Email address" type="email" value={lem} onChange={e=>setLem(e.target.value)} required autoComplete="email" />
-                    <FLInput id="l-pw" label="Password" type="password" value={lpw} onChange={e=>setLpw(e.target.value)} required autoComplete="current-password" />
-                    <motion.button type="submit" disabled={lLoading||lOk} whileTap={{ scale: 0.97 }}
-                      style={{ marginTop: 8, height: 50, borderRadius: 10, border: "none", cursor: lLoading?"wait":"pointer", background: lOk?T.emerald:T.cyan, color: T.bg, fontSize: 14, fontWeight: 700, fontFamily: "Geist, sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background 0.3s ease", boxShadow: lOk?`0 0 28px ${T.emeraldGlow}`:`0 0 28px ${T.cyanGlow}`, letterSpacing: "-0.01em" }}>
+                    <FLInput id="l-em" label="Email address" type="email" value={lem} onChange={e => setLem(e.target.value)} required autoComplete="email" />
+                    <FLInput id="l-pw" label="Password" type="password" value={lpw} onChange={e => setLpw(e.target.value)} required autoComplete="current-password" />
+                    <motion.button type="submit" disabled={lLoading || lOk} whileTap={{ scale: 0.97 }}
+                      style={{ marginTop: 8, height: 50, borderRadius: 10, border: "none", cursor: lLoading ? "wait" : "pointer", background: lOk ? T.emerald : T.cyan, color: T.bg, fontSize: 14, fontWeight: 700, fontFamily: "Geist, sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background 0.3s ease", boxShadow: lOk ? `0 0 28px ${T.emeraldGlow}` : `0 0 28px ${T.cyanGlow}`, letterSpacing: "-0.01em" }}>
                       {lLoading ? <LoadingSpinner /> : lOk ? "Signed in" : "Sign in"}
                     </motion.button>
                     <p style={{ textAlign: "center", fontSize: 13, color: T.text3, marginTop: 6 }}>
@@ -567,15 +568,15 @@ function AuthSection({ id }) {
                 )}
                 {mode === "register" && (
                   <motion.form key="register" custom={dir} variants={SLIDE} initial="initial" animate="animate" exit="exit" onSubmit={doRegister} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    <FLInput id="r-em" label="Email address" type="email" value={rem} onChange={e=>setRem(e.target.value)} required autoComplete="email" />
-                    <FLInput id="r-pw" label="Password" type="password" value={rpw} onChange={e=>setRpw(e.target.value)} required autoComplete="new-password" />
-                    <FLInput id="r-cp" label="Confirm password" type="password" value={rcp} onChange={e=>setRcp(e.target.value)} required autoComplete="new-password" />
-                    <FLSelect id="r-role" label="Role" value={rol} onChange={e=>setRol(e.target.value)} required options={[{value:"instructor",label:"Instructor"},{value:"ta",label:"TA"}]} />
+                    <FLInput id="r-em" label="Email address" type="email" value={rem} onChange={e => { setRem(e.target.value); setROk(false) }} required autoComplete="email" />
+                    <FLInput id="r-pw" label="Password" type="password" value={rpw} onChange={e => { setRpw(e.target.value); setROk(false) }} required autoComplete="new-password" />
+                    <FLInput id="r-cp" label="Confirm password" type="password" value={rcp} onChange={e => { setRcp(e.target.value); setROk(false) }} required autoComplete="new-password" />
+                    <FLSelect id="r-role" label="Role" value={rol} onChange={e => setRol(e.target.value)} required options={[{ value: "instructor", label: "Instructor" }, { value: "ta", label: "TA" }]} />
                     <AnimatePresence>
-                      {rErr && <motion.p initial={{ opacity:0, y:-6 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }} style={{ fontSize: 12, color: T.red, background: "rgba(248,113,113,0.07)", border: "1px solid rgba(248,113,113,0.18)", borderRadius: 7, padding: "8px 12px", fontFamily: "Geist Mono, monospace" }}>{rErr}</motion.p>}
+                      {rErr && <motion.p initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ fontSize: 12, color: T.red, background: "rgba(248,113,113,0.07)", border: "1px solid rgba(248,113,113,0.18)", borderRadius: 7, padding: "8px 12px", fontFamily: "Geist Mono, monospace" }}>{rErr}</motion.p>}
                     </AnimatePresence>
-                    <motion.button type="submit" disabled={rLoading||rOk} whileTap={{ scale: 0.97 }}
-                      style={{ marginTop: 4, height: 50, borderRadius: 10, border: "none", cursor: rLoading?"wait":"pointer", background: rOk?T.emerald:T.cyan, color: T.bg, fontSize: 14, fontWeight: 700, fontFamily: "Geist, sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background 0.3s ease", boxShadow: rOk?`0 0 28px ${T.emeraldGlow}`:`0 0 28px ${T.cyanGlow}`, letterSpacing: "-0.01em" }}>
+                    <motion.button type="submit" disabled={rLoading || rOk} whileTap={{ scale: 0.97 }}
+                      style={{ marginTop: 4, height: 50, borderRadius: 10, border: "none", cursor: rLoading ? "wait" : "pointer", background: rOk ? T.emerald : T.cyan, color: T.bg, fontSize: 14, fontWeight: 700, fontFamily: "Geist, sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background 0.3s ease", boxShadow: rOk ? `0 0 28px ${T.emeraldGlow}` : `0 0 28px ${T.cyanGlow}`, letterSpacing: "-0.01em" }}>
                       {rLoading ? <LoadingSpinner /> : rOk ? "Request sent" : "Create account"}
                     </motion.button>
                     <p style={{ textAlign: "center", fontSize: 13, color: T.text3, marginTop: 6 }}>
@@ -587,11 +588,10 @@ function AuthSection({ id }) {
               </AnimatePresence>
             </div>
 
-            {/* Trust row */}
             <div style={{ marginTop: 24, paddingTop: 20, borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "center", gap: 24, flexWrap: "wrap" }}>
-              {["SOC 2 audit in progress","End-to-end encrypted","Full audit trail"].map(t => (
+              {["SOC 2 audit in progress", "End-to-end encrypted", "Full audit trail"].map(t => (
                 <span key={t} style={{ fontSize: 11, color: T.text3, display: "flex", alignItems: "center", gap: 5 }}>
-                  <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1L1.5 3v3.5C1.5 8.9 3.2 10.5 5.5 11c2.3-.5 4-2.1 4-4.5V3L5.5 1z" stroke={T.text3} strokeWidth="1" strokeLinejoin="round"/></svg>
+                  <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1L1.5 3v3.5C1.5 8.9 3.2 10.5 5.5 11c2.3-.5 4-2.1 4-4.5V3L5.5 1z" stroke={T.text3} strokeWidth="1" strokeLinejoin="round" /></svg>
                   {t}
                 </span>
               ))}
@@ -603,9 +603,6 @@ function AuthSection({ id }) {
   );
 }
 
-/* ─────────────────────────────────────────────
-   FOOTER
-───────────────────────────────────────────── */
 function Footer() {
   return (
     <footer style={{ borderTop: `1px solid ${T.border}`, padding: "clamp(28px,4vw,44px) 0", background: T.bg, position: "relative", zIndex: 10 }}>
@@ -618,9 +615,9 @@ function Footer() {
           <span style={{ fontSize: 11, fontFamily: "Geist Mono, monospace", color: T.text3 }}>© 2025</span>
         </div>
         <div style={{ display: "flex", gap: 24 }}>
-          {["Privacy","Terms","Status","Docs"].map(l => (
+          {["Privacy", "Terms", "Status", "Docs"].map(l => (
             <a key={l} href="#" style={{ fontSize: 13, color: T.text3, textDecoration: "none", transition: "color 0.15s" }}
-              onMouseEnter={e=>e.target.style.color=T.text1} onMouseLeave={e=>e.target.style.color=T.text3}>{l}</a>
+              onMouseEnter={e => e.target.style.color = T.text1} onMouseLeave={e => e.target.style.color = T.text3}>{l}</a>
           ))}
         </div>
       </div>
@@ -628,9 +625,6 @@ function Footer() {
   );
 }
 
-/* ─────────────────────────────────────────────
-   HOME PAGE  (default export)
-───────────────────────────────────────────── */
 export default function Home() {
   const authRef = useRef();
   const scrollToAuth = () => authRef.current?.scrollIntoView({ behavior: "smooth" });

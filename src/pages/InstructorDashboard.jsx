@@ -5,6 +5,7 @@ import T, { SPRING, SPRING_LG, EASE_EXPO } from "../tokens";
 import { MagBtn, FLInput, FLSelect, LoadingSpinner, Dot } from "../components/ui";
 import { UserContext } from "../context/UserContext";
 import Sidebar from "../components/Sidebar";
+import api from "../services/api";
 
 /* ══════════════════════════════════════════════════════════════
    INLINE ICONS
@@ -12,66 +13,66 @@ import Sidebar from "../components/Sidebar";
 const Ico = {
   Upload: () => (
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
-      <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+      <polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" />
+      <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
     </svg>
   ),
   Trend: ({ up }) => (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={up ? T.emerald : T.red} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      {up ? <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/> : <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>}
-      {up ? <polyline points="17 6 23 6 23 12"/> : <polyline points="17 18 23 18 23 12"/>}
+      {up ? <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /> : <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />}
+      {up ? <polyline points="17 6 23 6 23 12" /> : <polyline points="17 18 23 18 23 12" />}
     </svg>
   ),
   Eye: () => (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
     </svg>
   ),
   X: () => (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   ),
   Check: ({ color }) => (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={color || T.emerald} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12"/>
+      <polyline points="20 6 9 17 4 12" />
     </svg>
   ),
   Plus: () => (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
     </svg>
   ),
   Copy: () => (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+      <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
     </svg>
   ),
   Edit: () => (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
     </svg>
   ),
   Search: () => (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
   ),
   Filter: () => (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
     </svg>
   ),
   Release: () => (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
     </svg>
   ),
   Chevron: ({ dir = "down" }) => (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
       style={{ transform: dir === "up" ? "rotate(180deg)" : "none" }}>
-      <polyline points="6 9 12 15 18 9"/>
+      <polyline points="6 9 12 15 18 9" />
     </svg>
   ),
 };
@@ -108,41 +109,45 @@ function useBreakpoint() {
 /* ══════════════════════════════════════════════════════════════
    MOCK DATA
 ══════════════════════════════════════════════════════════════ */
-const MOCK_EXAMS = [
-  { id: 1, name: "CS301 – Midterm Exam",       uploaded: "Jun 04, 2026", scripts: 182, graded: 182, status: "Completed" },
-  { id: 2, name: "MATH201 – Linear Algebra",   uploaded: "Jun 05, 2026", scripts: 210, graded: 147, status: "In Review" },
-  { id: 3, name: "PHY101 – Mechanics Final",   uploaded: "Jun 06, 2026", scripts: 96,  graded: 31,  status: "Processing" },
-  { id: 4, name: "CS401 – Algorithms Quiz 3",  uploaded: "Jun 07, 2026", scripts: 64,  graded: 64,  status: "Released"  },
-  { id: 5, name: "ECON101 – Micro Economics",  uploaded: "Jun 07, 2026", scripts: 145, graded: 0,   status: "Processing" },
-];
+
+async function get_exams() {
+  try {
+    const response = await api.get('/exams')
+    return response.data
+  } catch (err) {
+    console.log(err)
+    return []
+  }
+
+}
 
 const MOCK_RUBRICS = [
-  { id: 1, name: "CS301 Standard Rubric",     questions: 8,  modified: "Jun 03, 2026", exams: 3 },
-  { id: 2, name: "Math Proof Evaluator",       questions: 5,  modified: "May 28, 2026", exams: 2 },
-  { id: 3, name: "Physics Short Answer",       questions: 12, modified: "Jun 01, 2026", exams: 1 },
-  { id: 4, name: "Essay & Argument Rubric",    questions: 6,  modified: "May 22, 2026", exams: 4 },
+  { id: 1, title: "CS301 Standard Rubric", questions: 8, modified: "Jun 03, 2026", exams: 3 },
+  { id: 2, title: "Math Proof Evaluator", questions: 5, modified: "May 28, 2026", exams: 2 },
+  { id: 3, title: "Physics Short Answer", questions: 12, modified: "Jun 01, 2026", exams: 1 },
+  { id: 4, title: "Essay & Argument Rubric", questions: 6, modified: "May 22, 2026", exams: 4 },
 ];
 
 const MOCK_GRADES = [
-  { id: "STU-0041", exam: "CS301 – Midterm",      score: 87, max: 100, released: true  },
-  { id: "STU-0082", exam: "CS301 – Midterm",      score: 54, max: 100, released: true  },
-  { id: "STU-0113", exam: "MATH201 – Lin. Alg.",  score: 91, max: 100, released: false },
-  { id: "STU-0124", exam: "MATH201 – Lin. Alg.",  score: 43, max: 100, released: false },
-  { id: "STU-0057", exam: "CS301 – Midterm",      score: 76, max: 100, released: true  },
-  { id: "STU-0198", exam: "CS401 – Algo Quiz 3",  score: 95, max: 100, released: true  },
-  { id: "STU-0203", exam: "CS401 – Algo Quiz 3",  score: 62, max: 100, released: false },
-  { id: "STU-0211", exam: "MATH201 – Lin. Alg.",  score: 38, max: 100, released: false },
+  { id: "STU-0041", exam: "CS301 – Midterm", score: 87, max: 100, released: true },
+  { id: "STU-0082", exam: "CS301 – Midterm", score: 54, max: 100, released: true },
+  { id: "STU-0113", exam: "MATH201 – Lin. Alg.", score: 91, max: 100, released: false },
+  { id: "STU-0124", exam: "MATH201 – Lin. Alg.", score: 43, max: 100, released: false },
+  { id: "STU-0057", exam: "CS301 – Midterm", score: 76, max: 100, released: true },
+  { id: "STU-0198", exam: "CS401 – Algo Quiz 3", score: 95, max: 100, released: true },
+  { id: "STU-0203", exam: "CS401 – Algo Quiz 3", score: 62, max: 100, released: false },
+  { id: "STU-0211", exam: "MATH201 – Lin. Alg.", score: 38, max: 100, released: false },
 ];
 
 const MOCK_AUDIT = [
-  { id: 1, ts: "2026-06-07 22:41", actor: "dr.adeyemi@uni.edu",    type: "RELEASED",   desc: "Released grades for CS301 – Midterm Exam (182 scripts)" },
-  { id: 2, ts: "2026-06-07 19:08", actor: "ta.priya@uni.edu",      type: "OVERRIDDEN", desc: "Overrode AI score for STU-0082 Q4 — from 6/10 to 8/10" },
-  { id: 3, ts: "2026-06-07 17:22", actor: "ta.raj@uni.edu",        type: "FLAGGED",    desc: "Flagged STU-0113 Q2 for plagiarism similarity 94%" },
-  { id: 4, ts: "2026-06-06 14:55", actor: "dr.adeyemi@uni.edu",    type: "UPLOADED",   desc: "Uploaded PHY101 – Mechanics Final (96 scripts)" },
-  { id: 5, ts: "2026-06-06 11:30", actor: "system",                type: "GRADED",     desc: "AI grading completed MATH201 – Linear Algebra batch 2/3" },
-  { id: 6, ts: "2026-06-05 09:10", actor: "dr.adeyemi@uni.edu",    type: "UPLOADED",   desc: "Uploaded MATH201 – Linear Algebra (210 scripts)" },
-  { id: 7, ts: "2026-06-04 16:44", actor: "ta.priya@uni.edu",      type: "OVERRIDDEN", desc: "Overrode AI score for STU-0041 Q7 — from 9/10 to 10/10" },
-  { id: 8, ts: "2026-06-04 08:00", actor: "system",                type: "GRADED",     desc: "AI grading completed CS301 – Midterm Exam (182 scripts)" },
+  { id: 1, ts: "2026-06-07 22:41", actor: "dr.adeyemi@uni.edu", type: "RELEASED", desc: "Released grades for CS301 – Midterm Exam (182 scripts)" },
+  { id: 2, ts: "2026-06-07 19:08", actor: "ta.priya@uni.edu", type: "OVERRIDDEN", desc: "Overrode AI score for STU-0082 Q4 — from 6/10 to 8/10" },
+  { id: 3, ts: "2026-06-07 17:22", actor: "ta.raj@uni.edu", type: "FLAGGED", desc: "Flagged STU-0113 Q2 for plagiarism similarity 94%" },
+  { id: 4, ts: "2026-06-06 14:55", actor: "dr.adeyemi@uni.edu", type: "UPLOADED", desc: "Uploaded PHY101 – Mechanics Final (96 scripts)" },
+  { id: 5, ts: "2026-06-06 11:30", actor: "system", type: "GRADED", desc: "AI grading completed MATH201 – Linear Algebra batch 2/3" },
+  { id: 6, ts: "2026-06-05 09:10", actor: "dr.adeyemi@uni.edu", type: "UPLOADED", desc: "Uploaded MATH201 – Linear Algebra (210 scripts)" },
+  { id: 7, ts: "2026-06-04 16:44", actor: "ta.priya@uni.edu", type: "OVERRIDDEN", desc: "Overrode AI score for STU-0041 Q7 — from 9/10 to 10/10" },
+  { id: 8, ts: "2026-06-04 08:00", actor: "system", type: "GRADED", desc: "AI grading completed CS301 – Midterm Exam (182 scripts)" },
 ];
 
 const RUBRIC_PLACEHOLDER = `{
@@ -171,9 +176,9 @@ const RUBRIC_PLACEHOLDER = `{
 const StatusBadge = ({ status }) => {
   const map = {
     Processing: { color: "#f59e0b", bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.22)" },
-    "In Review": { color: T.cyan,    bg: T.cyanDim,               border: "rgba(34,211,238,0.18)"  },
-    Completed:  { color: T.emerald,  bg: T.emeraldDim,            border: "rgba(52,211,153,0.18)"  },
-    Released:   { color: T.text3,    bg: "rgba(69,85,95,0.15)",   border: T.border                 },
+    "In Review": { color: T.cyan, bg: T.cyanDim, border: "rgba(34,211,238,0.18)" },
+    Completed: { color: T.emerald, bg: T.emeraldDim, border: "rgba(52,211,153,0.18)" },
+    Released: { color: T.text3, bg: "rgba(69,85,95,0.15)", border: T.border },
   };
   const s = map[status] || map["Released"];
   return (
@@ -190,11 +195,11 @@ const StatusBadge = ({ status }) => {
 
 const AuditBadge = ({ type }) => {
   const map = {
-    GRADED:     { color: T.cyan,    bg: T.cyanDim    },
+    GRADED: { color: T.cyan, bg: T.cyanDim },
     OVERRIDDEN: { color: "#f59e0b", bg: "rgba(245,158,11,0.10)" },
-    FLAGGED:    { color: T.red,     bg: "rgba(248,113,113,0.10)" },
-    RELEASED:   { color: T.emerald, bg: T.emeraldDim  },
-    UPLOADED:   { color: T.text2,   bg: "rgba(136,150,164,0.10)" },
+    FLAGGED: { color: T.red, bg: "rgba(248,113,113,0.10)" },
+    RELEASED: { color: T.emerald, bg: T.emeraldDim },
+    UPLOADED: { color: T.text2, bg: "rgba(136,150,164,0.10)" },
   };
   const s = map[type] || map["UPLOADED"];
   return (
@@ -230,16 +235,16 @@ function ProgressBar({ pct, color }) {
 
 const sectionTransition = {
   initial: { opacity: 0, y: 14 },
-  animate: { opacity: 1, y: 0,  transition: { ...SPRING_LG } },
-  exit:    { opacity: 0, y: -10, transition: { duration: 0.18 } },
+  animate: { opacity: 1, y: 0, transition: { ...SPRING_LG } },
+  exit: { opacity: 0, y: -10, transition: { duration: 0.18 } },
 };
 
 const rowStagger = {
-  hidden:  {},
+  hidden: {},
   visible: { transition: { staggerChildren: 0.04 } },
 };
 const rowItem = {
-  hidden:  { opacity: 0, y: 8 },
+  hidden: { opacity: 0, y: 8 },
   visible: { opacity: 1, y: 0, transition: { ...SPRING } },
 };
 
@@ -276,7 +281,7 @@ function StatCard({ label, value, trend, trendUp, accent }) {
 /* ══════════════════════════════════════════════════════════════
    SECTION 1 — OVERVIEW
 ══════════════════════════════════════════════════════════════ */
-function SectionOverview() {
+function SectionOverview({ exams }) {
   return (
     <motion.div key="overview" {...sectionTransition}>
       {/* stats grid */}
@@ -284,10 +289,10 @@ function SectionOverview() {
         variants={rowStagger} initial="hidden" animate="visible"
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", marginBottom: "32px" }}
       >
-        <StatCard label="Total Exams"    value={12}  trend="+2"   trendUp />
-        <StatCard label="Exams Graded"   value={847} trend="+134" trendUp />
-        <StatCard label="Pending Review" value={234} trend="+18"  trendUp accent={T.cyan} />
-        <StatCard label="Flagged"        value={18}  trend="+3"   trendUp={false} accent={T.red} />
+        <StatCard label="Total Exams" value={exams.length} trend="+2" trendUp />
+        <StatCard label="Exams Graded" value={exams.reduce((acc, curr) => { return acc + curr.graded;}, 0)} trend="+134" trendUp />
+        <StatCard label="Pending Review" value={exams.filter(exam => exam.status === "In Review").length} trend="+18" trendUp accent={T.cyan} />
+        <StatCard label="Flagged" value={0} trend="+3" trendUp={false} accent={T.red} />
       </motion.div>
 
       {/* recent exams table */}
@@ -300,19 +305,19 @@ function SectionOverview() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>
-                {["Exam Name","Uploaded","Scripts","Graded","Status","Actions"].map((h) => (
+                {["Exam Name", "Uploaded", "Scripts", "Graded", "Status", "Actions"].map((h) => (
                   <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: "11px", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: T.text3, fontFamily: "Geist Mono, monospace", borderBottom: `1px solid ${T.border}`, whiteSpace: "nowrap" }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <motion.tbody variants={rowStagger} initial="hidden" animate="visible">
-              {MOCK_EXAMS.map((exam) => (
+              {exams.map((exam) => (
                 <motion.tr
                   key={exam.id} variants={rowItem}
                   whileHover={{ backgroundColor: T.surfaceHigh }}
                   style={{ transition: "background-color 0.15s", cursor: "default" }}
                 >
-                  <td style={{ padding: "14px 20px", fontSize: "13.5px", color: T.text1, fontWeight: 500 }}>{exam.name}</td>
+                  <td style={{ padding: "14px 20px", fontSize: "13.5px", color: T.text1, fontWeight: 500 }}>{exam.title}</td>
                   <td style={{ padding: "14px 20px", fontSize: "12px", color: T.text2, fontFamily: "Geist Mono, monospace", whiteSpace: "nowrap" }}>{exam.uploaded}</td>
                   <td style={{ padding: "14px 20px", fontSize: "13px", color: T.text2, fontFamily: "Geist Mono, monospace" }}>{exam.scripts}</td>
                   <td style={{ padding: "14px 20px", fontSize: "13px", color: T.text2, fontFamily: "Geist Mono, monospace" }}>{exam.graded}</td>
@@ -335,12 +340,12 @@ function SectionOverview() {
 /* ══════════════════════════════════════════════════════════════
    SECTION 2 — UPLOAD EXAM
 ══════════════════════════════════════════════════════════════ */
-function SectionExams() {
-  const [dragOver,   setDragOver]   = useState(false);
-  const [files,      setFiles]      = useState([]);
+function SectionExams({ exams }) {
+  const [dragOver, setDragOver] = useState(false);
+  const [files, setFiles] = useState([]);
   const [rubricJson, setRubricJson] = useState(RUBRIC_PLACEHOLDER);
-  const [jsonValid,  setJsonValid]  = useState(null); // null | true | false
-  const [uploading,  setUploading]  = useState(false);
+  const [jsonValid, setJsonValid] = useState(null); // null | true | false
+  const [uploading, setUploading] = useState(false);
   const fileRef = useRef();
 
   const addFiles = (incoming) => {
@@ -469,14 +474,14 @@ function SectionExams() {
         <div style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "14px", overflow: "hidden" }}>
           <div style={{ padding: "16px 20px", borderBottom: `1px solid ${T.border}`, fontSize: "13px", fontWeight: 600, color: T.text1 }}>Uploaded Batches</div>
           <motion.div variants={rowStagger} initial="hidden" animate="visible" style={{ padding: "12px" }}>
-            {MOCK_EXAMS.map((exam) => {
+            {exams.map((exam) => {
               const pct = Math.round((exam.graded / exam.scripts) * 100);
               return (
                 <motion.div key={exam.id} variants={rowItem}
                   style={{ padding: "14px", borderRadius: "10px", marginBottom: "8px", backgroundColor: T.surfaceHigh }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
                     <div>
-                      <div style={{ fontSize: "12.5px", fontWeight: 600, color: T.text1, marginBottom: "2px" }}>{exam.name}</div>
+                      <div style={{ fontSize: "12.5px", fontWeight: 600, color: T.text1, marginBottom: "2px" }}>{exam.title}</div>
                       <div style={{ fontSize: "11px", color: T.text3, fontFamily: "Geist Mono, monospace" }}>{exam.uploaded} · {exam.scripts} scripts</div>
                     </div>
                     <StatusBadge status={exam.status} />
@@ -550,7 +555,7 @@ function SectionRubrics() {
           <motion.div key={r.id} variants={rowItem}
             whileHover={{ borderColor: T.borderMid, scale: 1.01 }}
             style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "20px", transition: "border-color 0.15s", cursor: "default" }}>
-            <div style={{ fontWeight: 700, fontSize: "14px", color: T.text1, marginBottom: "6px", letterSpacing: "-0.01em" }}>{r.name}</div>
+            <div style={{ fontWeight: 700, fontSize: "14px", color: T.text1, marginBottom: "6px", letterSpacing: "-0.01em" }}>{r.title}</div>
             <div style={{ display: "flex", gap: "16px", marginBottom: "16px" }}>
               <span style={{ fontSize: "11px", color: T.text3, fontFamily: "Geist Mono, monospace" }}>{r.questions} questions</span>
               <span style={{ fontSize: "11px", color: T.text3, fontFamily: "Geist Mono, monospace" }}>{r.exams} exams</span>
@@ -571,10 +576,10 @@ function SectionRubrics() {
    SECTION 4 — GRADES
 ══════════════════════════════════════════════════════════════ */
 function SectionGrades() {
-  const [search,      setSearch]      = useState("");
-  const [releasing,   setReleasing]   = useState(false);
+  const [search, setSearch] = useState("");
+  const [releasing, setReleasing] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [released,    setReleased]    = useState(false);
+  const [released, setReleased] = useState(false);
 
   const filtered = MOCK_GRADES.filter(g =>
     g.id.toLowerCase().includes(search.toLowerCase()) ||
@@ -640,7 +645,7 @@ function SectionGrades() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>
-                {["Student ID","Exam","Score","Max","Percentage","Status","Released"].map(h => (
+                {["Student ID", "Exam", "Score", "Max", "Percentage", "Status", "Released"].map(h => (
                   <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: "11px", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: T.text3, fontFamily: "Geist Mono, monospace", borderBottom: `1px solid ${T.border}`, whiteSpace: "nowrap" }}>{h}</th>
                 ))}
               </tr>
@@ -683,7 +688,7 @@ function SectionGrades() {
 ══════════════════════════════════════════════════════════════ */
 function SectionAudit() {
   const [typeFilter, setTypeFilter] = useState("ALL");
-  const types = ["ALL","GRADED","OVERRIDDEN","FLAGGED","RELEASED","UPLOADED"];
+  const types = ["ALL", "GRADED", "OVERRIDDEN", "FLAGGED", "RELEASED", "UPLOADED"];
   const filtered = typeFilter === "ALL" ? MOCK_AUDIT : MOCK_AUDIT.filter(e => e.type === typeFilter);
 
   return (
@@ -736,20 +741,20 @@ function SectionAudit() {
    SECTION TITLES
 ══════════════════════════════════════════════════════════════ */
 const SECTION_META = {
-  overview:  { title: "Overview",  sub: "Your grading workspace at a glance"         },
-  exams:     { title: "Exams",     sub: "Upload and manage exam batches"              },
-  rubrics:   { title: "Rubrics",   sub: "Define and manage grading rubrics"           },
-  grades:    { title: "Grades",    sub: "Review scores and release to students"       },
-  audit:     { title: "Audit Log", sub: "Full activity trail for this workspace"      },
-  settings:  { title: "Settings",  sub: "Configure your account and preferences"      },
+  overview: { title: "Overview", sub: "Your grading workspace at a glance" },
+  exams: { title: "Exams", sub: "Upload and manage exam batches" },
+  rubrics: { title: "Rubrics", sub: "Define and manage grading rubrics" },
+  grades: { title: "Grades", sub: "Review scores and release to students" },
+  audit: { title: "Audit Log", sub: "Full activity trail for this workspace" },
+  settings: { title: "Settings", sub: "Configure your account and preferences" },
 };
 
 const PATH_TO_SECTION = {
-  "/instructor":          "overview",
-  "/instructor/exams":    "exams",
-  "/instructor/rubrics":  "rubrics",
-  "/instructor/grades":   "grades",
-  "/instructor/audit":    "audit",
+  "/instructor": "overview",
+  "/instructor/exams": "exams",
+  "/instructor/rubrics": "rubrics",
+  "/instructor/grades": "grades",
+  "/instructor/audit": "audit",
   "/instructor/settings": "settings",
 };
 
@@ -757,19 +762,39 @@ const PATH_TO_SECTION = {
    INSTRUCTOR DASHBOARD
 ══════════════════════════════════════════════════════════════ */
 export default function InstructorDashboard() {
-  const navigate         = useNavigate();
-  const { user }         = useContext(UserContext);
+  const navigate = useNavigate();
+  const { user } = useContext(UserContext);
   const { isMobile, isTablet } = useBreakpoint();
   const [activeRoute, setActiveRoute] = useState("/instructor");
+  const [exams, setExams] = useState([]);
+  const [loadingExams, setLoadingExams] = useState(true);
 
   const section = PATH_TO_SECTION[activeRoute] || "overview";
-  const meta    = SECTION_META[section];
+  const meta = SECTION_META[section];
 
-  /* redirect if wrong role */
   useEffect(() => {
     if (!user) { navigate("/login", { replace: true }); return; }
     if (user.role !== "instructor") navigate("/ta", { replace: true });
   }, [user, navigate]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchExams = async () => {
+      try {
+        setLoadingExams(true);
+        const response = await api.get('/exams/');
+        setExams(response.data);
+      } catch (err) {
+        console.error("Failed to fetch exams", err);
+        setExams([]);
+      } finally {
+        setLoadingExams(false);
+      }
+    };
+
+    fetchExams();
+  }, [user]);
 
   const sidebarW = 220;
 
@@ -782,10 +807,8 @@ export default function InstructorDashboard() {
     <div style={{ display: "flex", minHeight: "100dvh", backgroundColor: T.bg, fontFamily: "Geist, sans-serif" }}>
       <Sidebar activeRoute={activeRoute} onNavigate={handleNavigate} />
 
-      {/* main */}
       <div style={{ flex: 1, marginLeft: sidebarW, display: "flex", flexDirection: "column", minHeight: "100dvh", overflow: "hidden" }}>
 
-        {/* top bar */}
         <div style={{
           height: "56px", backgroundColor: T.surface, borderBottom: `1px solid ${T.border}`,
           display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -802,15 +825,14 @@ export default function InstructorDashboard() {
           </div>
         </div>
 
-        {/* scrollable content */}
         <div style={{ flex: 1, overflowY: "auto", padding: "28px" }}>
           <AnimatePresence mode="wait">
-            {section === "overview"  && <SectionOverview  key="overview"  />}
-            {section === "exams"     && <SectionExams     key="exams"     />}
-            {section === "rubrics"   && <SectionRubrics   key="rubrics"   />}
-            {section === "grades"    && <SectionGrades    key="grades"    />}
-            {section === "audit"     && <SectionAudit     key="audit"     />}
-            {section === "settings"  && (
+            {section === "overview" && <SectionOverview key="overview" exams={exams}/>}
+            {section === "exams" && <SectionExams key="exams" exams={exams}/>}
+            {section === "rubrics" && <SectionRubrics key="rubrics" />}
+            {section === "grades" && <SectionGrades key="grades" />}
+            {section === "audit" && <SectionAudit key="audit" />}
+            {section === "settings" && (
               <motion.div key="settings" {...sectionTransition}
                 style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "400px", color: T.text3, fontSize: "14px" }}>
                 Settings coming soon.
