@@ -1,27 +1,34 @@
-import React, { useContext, createContext, useState } from "react";
+import { createContext, useState, useCallback } from "react";
 
-const UserContext = createContext();
+export const UserContext = createContext(null);
 
-export const UserProvider = ({ children }) => {
+export function UserProvider({ children }) {
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem("gradeops_user");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
 
-    const [token, setToken] = useState(localStorage.getItem('gradeops_token') || null);
-    const [user, setUser] = useState(null);
+  const login = useCallback((userData) => {
+    setUser(userData);
+    localStorage.setItem("gradeops_user", JSON.stringify(userData));
+  }, []);
 
-    const login = (newToken) => {
-        localStorage.setItem('gradeops_token', newToken);
-        setToken(newToken);
-    };
+  const logout = useCallback(() => {
+    setUser(null);
+    localStorage.removeItem("gradeops_user");
+  }, []);
 
-    const logout = () => {
-        localStorage.setItem('gradeops_token', null);
-        setToken(null);
-        setUser(null);
-    };
-    return (
-        <UserContext.Provider value={{ token, user, setUser, login, logout }}>
-            {children}
-        </UserContext.Provider>
-    );
-};
+  const authHeader = user?.token
+    ? { Authorization: `Bearer ${user.token}` }
+    : {};
 
-export const useUser = () => useContext(UserContext);
+  return (
+    <UserContext.Provider value={{ user, login, logout, authHeader }}>
+      {children}
+    </UserContext.Provider>
+  );
+}

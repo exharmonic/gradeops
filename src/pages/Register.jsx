@@ -1,140 +1,687 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Container, Row, Col, Form, Button } from 'react-bootstrap';
-import registerImg from '../assets/login.png';
+import { useState, useContext, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import T, { SPRING } from "../tokens";
+import { MagBtn, FLInput, FLSelect, LoadingSpinner, Dot } from "../components/ui";
+import { UserContext } from "../context/UserContext";
 
-function Register() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [role, setRole] = useState('ta');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [error, setError] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
+/* ─── inline SVGs ───────────────────────────────────────────── */
+const IconLogo = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <rect x="3" y="3" width="18" height="18" rx="4" fill={T.cyan} />
+    <path d="M8 12h8M12 8l4 4-4 4" stroke={T.bg} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError(null);
+const IconInfo = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.cyan} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="16" x2="12" y2="12" />
+    <line x1="12" y1="8" x2="12.01" y2="8" />
+  </svg>
+);
 
-        if (confirmPassword !== password) {
-            setError('Passwords do not match!');
-            return;
-        }
+const IconCheck = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.emerald} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
 
-        setLoading(true);
+/* ─── pipeline steps for right panel ───────────────────────── */
+const PIPELINE_STEPS = [
+  { label: "Upload",    sub: "Bulk PDF ingestion & rubric JSON",       color: T.cyan    },
+  { label: "OCR",       sub: "Vision model handwriting extraction",     color: T.emerald },
+  { label: "AI Grade",  sub: "Agentic LLM partial-credit scoring",      color: T.cyan    },
+  { label: "TA Review", sub: "Human-in-the-loop override queue",        color: T.emerald },
+  { label: "Release",   sub: "Instructor approval & audit log export",  color: T.cyan    },
+];
 
-        try {
-            const response = await fetch('http://localhost:8000/register', {
-                method: 'POST',
-                headers: {
-                    'Content-type': 'application/json'
-                },
-                body: JSON.stringify({
-                    email: email,
-                    password: password,
-                    role: role
-                })
-            });
+const ROLE_OPTIONS = [
+  { value: "instructor", label: "Instructor" },
+  { value: "ta",         label: "Teaching Assistant (TA)" },
+];
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || "Registration failed");
-            }
-
-            console.log('Account created!');
-            navigate('/login');
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const passwordMismatch = password && confirmPassword && password !== confirmPassword;
-    const activeError = passwordMismatch ? "The passwords do not match!" : error;
-
-    return (
-        <Container>
-            <Row className="justify-content-center">
-                <Col lg={6} md={8} sm={10} className="login-box p-4">
-                    <div className="login-key">
-                        <img src={registerImg} alt="Register Icon" className="key" />
-                    </div>
-
-                    <div className="login-title">REGISTER</div>
-
-                    <div className="login-form mt-4">
-                        <Form onSubmit={handleSubmit}>
-                            <Form.Group className="mb-4" controlId="formBasicEmail">
-                                <Form.Label className="form-control-label">EMAIL ADDRESS</Form.Label>
-                                <Form.Control
-                                    type="email"
-                                    required
-                                    value={email}
-                                    onChange={(e) => {
-                                        setEmail(e.target.value);
-                                        if (error) setError(null);
-                                    }} 
-                                />
-                            </Form.Group>
-
-                            <Form.Group className="mb-4" controlId="formBasicPassword">
-                                <Form.Label className="form-control-label">PASSWORD</Form.Label>
-                                <Form.Control
-                                    type="password"
-                                    required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)} 
-                                />
-                            </Form.Group>
-
-                            <Form.Group className="mb-4" controlId="formConfirmPassword">
-                                <Form.Label className="form-control-label">CONFIRM PASSWORD</Form.Label>
-                                <Form.Control
-                                    type="password"
-                                    required
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)} 
-                                />
-                            </Form.Group>
-
-                            <Form.Group className="mb-4" controlId="formRole">
-                                <Form.Label className="form-control-label">ROLE</Form.Label>
-                                <Form.Select
-                                    className='role-select-form'
-                                    required
-                                    value={role}
-                                    onChange={(e) => setRole(e.target.value)}
-                                >
-                                    <option value="ta">TA</option>
-                                    <option value="instructor">INSTRUCTOR</option>
-                                </Form.Select>
-                            </Form.Group>
-
-                            {!loading && activeError && (
-                                <label className="error-message">{activeError}</label>
-                            )}
-                            
-                            <div className="d-flex flex-column align-items-center mt-5 mb-2">
-                                <Button 
-                                    variant="outline-primary" 
-                                    type="submit" 
-                                    className="login-btn mb-3"
-                                    disabled={loading || passwordMismatch}
-                                >
-                                    {loading ? "CREATING ACCOUNT..." : "REGISTER"}
-                                </Button>
-
-                                <Link to="/login" className="register-text">
-                                    Already have an account? Login here!
-                                </Link>
-                            </div>
-                        </Form>
-                    </div>
-                </Col>
-            </Row>
-        </Container>
-    );
+/* ─── password strength ─────────────────────────────────────── */
+function getStrength(pw) {
+  if (!pw)        return { level: 0, label: "",           color: T.border    };
+  if (pw.length < 6)  return { level: 1, label: "Weak",   color: T.red       };
+  if (pw.length < 10) return { level: 2, label: "Fair",   color: "#f59e0b"   };
+  if (pw.length < 14) return { level: 3, label: "Strong", color: T.cyan      };
+  return               { level: 4, label: "Very strong",  color: T.emerald   };
 }
 
-export default Register;
+/* ─── animation variants ────────────────────────────────────── */
+const fadeUp = (delay = 0) => ({
+  hidden:  { opacity: 0, y: 18 },
+  visible: { opacity: 1, y: 0, transition: { ...SPRING, delay } },
+});
+
+const staggerContainer = {
+  hidden:  {},
+  visible: { transition: { staggerChildren: 0.08 } },
+};
+
+const fieldVariant = {
+  hidden:  { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { ...SPRING } },
+};
+
+const stepVariant = {
+  hidden:  { opacity: 0, x: 32 },
+  visible: { opacity: 1, x: 0,  transition: { ...SPRING } },
+};
+
+const staggerSteps = {
+  hidden:  {},
+  visible: { transition: { staggerChildren: 0.12, delayChildren: 0.3 } },
+};
+
+const fieldErrorVariant = {
+  hidden:  { opacity: 0, y: -6, height: 0    },
+  visible: { opacity: 1, y: 0,  height: "auto" },
+  exit:    { opacity: 0, y: -4, height: 0,   transition: { duration: 0.14 } },
+};
+
+/* ══════════════════════════════════════════════════════════════
+   REGISTER PAGE
+══════════════════════════════════════════════════════════════ */
+export default function Register() {
+  const navigate        = useNavigate();
+  const { user }        = useContext(UserContext);
+
+  const [email,    setEmail]    = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm,  setConfirm]  = useState("");
+  const [role,     setRole]     = useState("");
+  const [loading,  setLoading]  = useState(false);
+  const [success,  setSuccess]  = useState(false);
+  const [apiError, setApiError] = useState("");
+  const [isNarrow, setIsNarrow] = useState(
+    typeof window !== "undefined" && window.innerWidth < 768
+  );
+
+  /* per-field errors */
+  const [errors, setErrors] = useState({
+    email: "", password: "", confirm: "", role: "",
+  });
+
+  /* redirect if already logged in */
+  useEffect(() => {
+    if (user) navigate(user.role === "instructor" ? "/instructor" : "/ta", { replace: true });
+  }, [user, navigate]);
+
+  /* resize listener */
+  useEffect(() => {
+    const handler = () => setIsNarrow(window.innerWidth < 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+
+  const strength = getStrength(password);
+
+  /* ── client-side validation ── */
+  const validate = () => {
+    const e = { email: "", password: "", confirm: "", role: "" };
+    let ok = true;
+
+    if (!email.includes("@")) {
+      e.email = "Enter a valid email address."; ok = false;
+    }
+    if (password.length < 6) {
+      e.password = "Password must be at least 6 characters."; ok = false;
+    }
+    if (password !== confirm) {
+      e.confirm = "Passwords do not match."; ok = false;
+    }
+    if (!role) {
+      e.role = "Please select a role."; ok = false;
+    }
+
+    setErrors(e);
+    return ok;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (loading || success) return;
+    setApiError("");
+    if (!validate()) return;
+
+    setLoading(true);
+    try {
+      const res  = await fetch("/api/auth/register", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ email, password, role }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Registration failed");
+
+      setSuccess(true);
+      setTimeout(() => {
+        navigate("/login", { state: { registered: true } });
+      }, 700);
+    } catch (err) {
+      setApiError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* clear field error on change */
+  const field = (setter, key) => (e) => {
+    setter(e.target.value);
+    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: "" }));
+  };
+
+  /* ── styles ── */
+  const S = {
+    root: {
+      display:         "flex",
+      minHeight:       "100dvh",
+      backgroundColor: T.bg,
+      fontFamily:      "Geist, sans-serif",
+      overflow:        "hidden",
+    },
+
+    /* LEFT — form panel */
+    left: {
+      flex:            1,
+      display:         "flex",
+      alignItems:      "center",
+      justifyContent:  "center",
+      padding:         "clamp(24px, 4vw, 48px)",
+      backgroundColor: T.surface,
+      overflowY:       "auto",
+    },
+
+    card: {
+      width:          "100%",
+      maxWidth:       "420px",
+      display:        "flex",
+      flexDirection:  "column",
+      paddingTop:     "clamp(16px, 3vw, 32px)",
+      paddingBottom:  "clamp(16px, 3vw, 32px)",
+    },
+
+    cardLogoRow: {
+      display:        "flex",
+      alignItems:     "center",
+      gap:            "8px",
+      marginBottom:   "28px",
+    },
+    cardLogoText: {
+      fontWeight:     700,
+      fontSize:       "16px",
+      color:          T.text1,
+      letterSpacing:  "-0.02em",
+    },
+    heading: {
+      fontWeight:     900,
+      fontSize:       "clamp(28px, 4vw, 36px)",
+      color:          T.text1,
+      letterSpacing:  "-0.04em",
+      lineHeight:     1.1,
+      marginBottom:   "8px",
+    },
+    subtext: {
+      fontSize:       "14px",
+      color:          T.text2,
+      marginBottom:   "32px",
+      lineHeight:     1.5,
+    },
+
+    fieldsWrap: {
+      display:        "flex",
+      flexDirection:  "column",
+      gap:            "18px",
+      marginBottom:   "24px",
+    },
+
+    /* password strength bar */
+    strengthWrap: {
+      marginTop:      "8px",
+      display:        "flex",
+      flexDirection:  "column",
+      gap:            "5px",
+    },
+    strengthTrack: {
+      display:        "flex",
+      gap:            "4px",
+      height:         "3px",
+    },
+    strengthLabel: {
+      fontSize:       "11px",
+      fontFamily:     "Geist Mono, monospace",
+      letterSpacing:  "0.06em",
+      color:          T.text3,
+      transition:     "color 0.3s",
+    },
+
+    /* field error */
+    fieldError: {
+      fontSize:       "12px",
+      color:          T.red,
+      marginTop:      "5px",
+      fontFamily:     "Geist, sans-serif",
+      overflow:       "hidden",
+    },
+
+    /* instructor info box */
+    infoBox: {
+      display:         "flex",
+      alignItems:      "flex-start",
+      gap:             "10px",
+      padding:         "12px 14px",
+      borderRadius:    "10px",
+      backgroundColor: T.cyanDim,
+      border:          `1px solid rgba(34,211,238,0.18)`,
+      color:           T.text2,
+      fontSize:        "12.5px",
+      lineHeight:      1.55,
+      marginBottom:    "4px",
+      overflow:        "hidden",
+    },
+
+    /* api error box */
+    apiErrorBox: {
+      display:         "flex",
+      alignItems:      "center",
+      gap:             "10px",
+      padding:         "12px 14px",
+      borderRadius:    "10px",
+      backgroundColor: "rgba(248,113,113,0.08)",
+      border:          `1px solid rgba(248,113,113,0.22)`,
+      color:           T.red,
+      fontSize:        "13px",
+      marginBottom:    "16px",
+      overflow:        "hidden",
+    },
+
+    signInRow: {
+      textAlign:      "center",
+      fontSize:       "13px",
+      color:          T.text2,
+      marginTop:      "24px",
+    },
+    signInLink: {
+      color:          T.cyan,
+      cursor:         "pointer",
+      background:     "none",
+      border:         "none",
+      padding:        0,
+      fontFamily:     "Geist, sans-serif",
+      fontSize:       "13px",
+      fontWeight:     600,
+    },
+
+    /* RIGHT — decorative pipeline panel */
+    right: {
+      flex:            "0 0 45%",
+      position:        "relative",
+      display:         "flex",
+      flexDirection:   "column",
+      justifyContent:  "center",
+      padding:         "clamp(28px, 4vw, 64px)",
+      borderLeft:      `1px solid ${T.border}`,
+      overflow:        "hidden",
+    },
+    rightGlow: {
+      position:        "absolute",
+      top:             "40%",
+      left:            "50%",
+      transform:       "translate(-50%, -50%)",
+      width:           "400px",
+      height:          "400px",
+      borderRadius:    "50%",
+      background:      `radial-gradient(circle, ${T.emeraldGlow} 0%, transparent 70%)`,
+      pointerEvents:   "none",
+    },
+    rightGlow2: {
+      position:        "absolute",
+      top:             "-60px",
+      left:            "-60px",
+      width:           "260px",
+      height:          "260px",
+      borderRadius:    "50%",
+      background:      `radial-gradient(circle, rgba(34,211,238,0.06) 0%, transparent 70%)`,
+      pointerEvents:   "none",
+    },
+    panelLabel: {
+      fontSize:        "11px",
+      fontWeight:      600,
+      letterSpacing:   "0.12em",
+      textTransform:   "uppercase",
+      color:           T.text3,
+      marginBottom:    "36px",
+      position:        "relative",
+      zIndex:          1,
+    },
+
+    /* pipeline */
+    pipelineWrap: {
+      position:        "relative",
+      zIndex:          1,
+      display:         "flex",
+      flexDirection:   "column",
+    },
+    stepRow: {
+      display:         "flex",
+      alignItems:      "flex-start",
+      gap:             "16px",
+      position:        "relative",
+    },
+    stepLeft: {
+      display:         "flex",
+      flexDirection:   "column",
+      alignItems:      "center",
+      width:           "14px",
+      flexShrink:      0,
+      paddingTop:      "2px",
+    },
+    stepLine: {
+      width:           "1px",
+      flex:            1,
+      minHeight:       "36px",
+      backgroundColor: T.border,
+      margin:          "6px 0",
+    },
+    stepContent: {
+      paddingBottom:   "32px",
+      flex:            1,
+    },
+    stepLabel: {
+      fontWeight:      700,
+      fontSize:        "15px",
+      color:           T.text1,
+      letterSpacing:   "-0.02em",
+      marginBottom:    "4px",
+    },
+    stepSub: {
+      fontSize:        "12.5px",
+      color:           T.text2,
+      lineHeight:      1.5,
+    },
+  };
+
+  /* ── strength bar segments ── */
+  const StrengthBar = () => (
+    <div style={S.strengthWrap}>
+      <div style={S.strengthTrack}>
+        {[1, 2, 3, 4].map((seg) => (
+          <motion.div
+            key={seg}
+            style={{ flex: 1, borderRadius: "2px", backgroundColor: T.border }}
+            animate={{
+              backgroundColor: seg <= strength.level ? strength.color : T.border,
+            }}
+            transition={{ duration: 0.25 }}
+          />
+        ))}
+      </div>
+      <AnimatePresence mode="wait">
+        {strength.label && (
+          <motion.span
+            key={strength.label}
+            style={{ ...S.strengthLabel, color: strength.color }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+          >
+            {strength.label}
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+
+  /* ── per-field error ── */
+  const FieldError = ({ msg }) => (
+    <AnimatePresence>
+      {msg && (
+        <motion.div
+          style={S.fieldError}
+          variants={fieldErrorVariant}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+        >
+          {msg}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
+  return (
+    <div style={S.root}>
+
+      {/* ══ LEFT — FORM PANEL ══ */}
+      <div style={S.left}>
+        <motion.div
+          style={S.card}
+          variants={fadeUp(0.2)}
+          initial="hidden"
+          animate="visible"
+        >
+          {/* logo */}
+          <div style={S.cardLogoRow}>
+            <IconLogo />
+            <span style={S.cardLogoText}>GradeOps</span>
+          </div>
+
+          <h1 style={S.heading}>Join GradeOps.</h1>
+          <p style={S.subtext}>Create your account to access the grading pipeline.</p>
+
+          <form onSubmit={handleSubmit} noValidate>
+
+            {/* fields */}
+            <motion.div
+              style={S.fieldsWrap}
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+            >
+
+              {/* email */}
+              <motion.div variants={fieldVariant}>
+                <FLInput
+                  id="email"
+                  label="Email Address"
+                  type="email"
+                  value={email}
+                  onChange={field(setEmail, "email")}
+                  required
+                  autoComplete="email"
+                />
+                <FieldError msg={errors.email} />
+              </motion.div>
+
+              {/* password + strength */}
+              <motion.div variants={fieldVariant}>
+                <FLInput
+                  id="password"
+                  label="Password"
+                  type="password"
+                  value={password}
+                  onChange={field(setPassword, "password")}
+                  required
+                  autoComplete="new-password"
+                />
+                <StrengthBar />
+                <FieldError msg={errors.password} />
+              </motion.div>
+
+              {/* confirm password */}
+              <motion.div variants={fieldVariant}>
+                <FLInput
+                  id="confirm"
+                  label="Confirm Password"
+                  type="password"
+                  value={confirm}
+                  onChange={field(setConfirm, "confirm")}
+                  required
+                  autoComplete="new-password"
+                />
+                <FieldError msg={errors.confirm} />
+              </motion.div>
+
+              {/* role select */}
+              <motion.div variants={fieldVariant}>
+                <FLSelect
+                  id="role"
+                  label="Role"
+                  value={role}
+                  onChange={(e) => {
+                    setRole(e.target.value);
+                    if (errors.role) setErrors((prev) => ({ ...prev, role: "" }));
+                  }}
+                  required
+                  options={ROLE_OPTIONS}
+                />
+                <FieldError msg={errors.role} />
+              </motion.div>
+
+            </motion.div>
+
+            {/* instructor info box */}
+            <AnimatePresence>
+              {role === "instructor" && (
+                <motion.div
+                  style={S.infoBox}
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ ...SPRING }}
+                >
+                  <span style={{ flexShrink: 0, paddingTop: "1px" }}>
+                    <IconInfo />
+                  </span>
+                  <span>
+                    Instructor accounts require institution verification. A team member will
+                    review your request within 24 hours.
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* api error */}
+            <AnimatePresence>
+              {apiError && (
+                <motion.div
+                  style={{ ...S.apiErrorBox, marginTop: role === "instructor" ? "16px" : "0" }}
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.18 }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.red} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  {apiError}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* submit */}
+            <motion.div
+              style={{ marginTop: "8px" }}
+              animate={success ? { scale: [1, 0.97, 1] } : {}}
+              transition={{ duration: 0.3 }}
+            >
+              <MagBtn
+                type="submit"
+                variant={success ? "ghost" : "primary"}
+                size="lg"
+                style={{
+                  width:          "100%",
+                  justifyContent: "center",
+                  ...(success ? {
+                    backgroundColor: T.emeraldDim,
+                    border:          `1px solid ${T.emerald}`,
+                    color:           T.emerald,
+                  } : {}),
+                }}
+              >
+                {loading ? (
+                  <>
+                    <LoadingSpinner />
+                    <span style={{ marginLeft: "8px" }}>Creating account…</span>
+                  </>
+                ) : success ? (
+                  <>
+                    <IconCheck />
+                    <span style={{ marginLeft: "6px" }}>Account created!</span>
+                  </>
+                ) : (
+                  "Create account"
+                )}
+              </MagBtn>
+            </motion.div>
+
+          </form>
+
+          {/* sign in link */}
+          <div style={S.signInRow}>
+            Already have an account?{" "}
+            <motion.button
+              type="button"
+              style={S.signInLink}
+              whileHover={{ opacity: 0.8 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate("/login")}
+            >
+              Sign in
+            </motion.button>
+          </div>
+
+        </motion.div>
+      </div>
+
+      {/* ══ RIGHT — PIPELINE PANEL ══ */}
+      {!isNarrow && (
+        <div style={S.right}>
+          <div style={S.rightGlow} />
+          <div style={S.rightGlow2} />
+
+          <motion.p
+            style={S.panelLabel}
+            variants={fadeUp(0.2)}
+            initial="hidden"
+            animate="visible"
+          >
+            How it works
+          </motion.p>
+
+          <motion.div
+            style={S.pipelineWrap}
+            variants={staggerSteps}
+            initial="hidden"
+            animate="visible"
+          >
+            {PIPELINE_STEPS.map((step, i) => (
+              <motion.div key={step.label} style={S.stepRow} variants={stepVariant}>
+                {/* left: dot + line */}
+                <div style={S.stepLeft}>
+                  <Dot color={step.color} />
+                  {i < PIPELINE_STEPS.length - 1 && (
+                    <div style={S.stepLine} />
+                  )}
+                </div>
+
+                {/* content */}
+                <div style={S.stepContent}>
+                  <div style={S.stepLabel}>{step.label}</div>
+                  <div style={S.stepSub}>{step.sub}</div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      )}
+
+    </div>
+  );
+}

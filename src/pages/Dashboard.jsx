@@ -1,71 +1,51 @@
-import { useEffect, useState } from "react"
-import { useUser } from "../context/UserContext"
+import { useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { Spinner, Button } from 'react-bootstrap';
-import TADashboard from "./TADashboard"
-import InstructorDashboard from "./InstructorDashboard"
+import { motion } from "framer-motion";
+import T from "../tokens";
+import { UserContext } from "../context/UserContext";
 
+export default function Dashboard() {
+  const navigate   = useNavigate();
+  const { user }   = useContext(UserContext);
 
-const Dashboard = () => {
-    const { token, user, setUser, logout } = useUser();
-    const [loading, setLoading] = useState(true)
-    const navigate = useNavigate();
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!user || !["instructor", "ta"].includes(user.role)) {
+        navigate("/login", { replace: true });
+      } else {
+        navigate(user.role === "instructor" ? "/instructor" : "/ta", { replace: true });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [user, navigate]);
 
-    useEffect(() => {
-        if (!token) {
-            navigate('/login');
-            return;
-        }
+  return (
+    <div style={{
+      display:         "flex",
+      flexDirection:   "column",
+      alignItems:      "center",
+      justifyContent:  "center",
+      minHeight:       "100dvh",
+      backgroundColor: T.bg,
+      gap:             "16px",
+    }}>
+      <motion.svg
+        width="28" height="28" viewBox="0 0 24 24" fill="none"
+        animate={{ scale: [0.95, 1.05, 0.95] }}
+        transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <rect x="3" y="3" width="18" height="18" rx="4" fill={T.cyan} />
+        <path d="M8 12h8M12 8l4 4-4 4" stroke={T.bg} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </motion.svg>
 
-        const fetchUser = async () => {
-            try {
-                const response = await fetch('http://localhost:8000/users/me', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) throw new Error("Failed to fetch profile");
-
-                const userData = await response.json();
-                setUser(userData);
-            } catch (err) {
-                console.error(err);
-                logout();
-                navigate('/login')
-            }
-            finally {
-                setLoading('false')
-            }
-        };
-
-        if (!user) {
-            fetchUser();
-        }
-        else {
-            setLoading(false)
-        }
-
-    }, [token, user, setUser, logout, navigate]);
-
-    if (loading) return <div className="p-5 text-center"><Spinner animation="border" /></div>;
-
-    return (
-        <div className="container mt-5">
-            <div className="d-flex justify-content-between mb-4">
-                <h1>Welcome, {user?.email || 'User'}!</h1>
-                <Button variant="outline-danger" onClick={() => { logout(); navigate('/login'); }}>
-                    Logout
-                </Button>
-            </div>
-
-            {/* ROUTING BASED ON ROLE */}
-            {user?.role === 'ta' && <TADashboard />}
-            {user?.role === 'instructor' && <InstructorDashboard />}
-        </div>
-    );
+      <span style={{
+        fontFamily:    "Geist Mono, monospace",
+        fontSize:      "12px",
+        color:         T.text3,
+        letterSpacing: "0.04em",
+      }}>
+        Loading your workspace...
+      </span>
+    </div>
+  );
 }
-
-export default Dashboard;

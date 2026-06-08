@@ -1,105 +1,580 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Form, Button } from 'react-bootstrap';
-import loginImg from '../assets/login.png';
-import { useUser } from '../context/UserContext';
+import { useState, useContext, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import T, { EASE_EXPO, SPRING } from "../tokens";
+import { MagBtn, FLInput, LoadingSpinner, Dot } from "../components/ui";
+import { UserContext } from "../context/UserContext";
 
-function Login() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
+/* ─── tiny inline SVGs ─────────────────────────────────────── */
+const IconShield = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+  </svg>
+);
 
-    const { login } = useUser();
+const IconLogo = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <rect x="3" y="3" width="18" height="18" rx="4" fill={T.cyan} />
+    <path d="M8 12h8M12 8l4 4-4 4" stroke={T.bg} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError(null);
-        setLoading(true);
+const IconCheck = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.emerald} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
 
-        try {
-            const formData = new URLSearchParams()
-            formData.append('username', email);
-            formData.append('password', password);
+/* ─── callout data ──────────────────────────────────────────── */
+const CALLOUTS = [
+  { stat: "94.7%", label: "OCR extraction accuracy" },
+  { stat: "11×",   label: "faster grading vs manual" },
+  { stat: "2,400+", label: "exams processed this month" },
+];
 
-            const response = await fetch('http://localhost:8000/login/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: formData
-            })
+const TRUST = [
+  { icon: <IconShield />, label: "Secure" },
+  { icon: <IconShield />, label: "Private" },
+  { icon: <IconShield />, label: "Beta" },
+];
 
-            if (!response.ok) throw new Error('Invalid email or password')
+/* ─── animation variants ────────────────────────────────────── */
+const fadeUp = (delay = 0) => ({
+  hidden:  { opacity: 0, y: 18 },
+  visible: { opacity: 1, y: 0, transition: { ...SPRING, delay } },
+});
 
-            const data = await response.json()
+const staggerContainer = {
+  hidden:  {},
+  visible: { transition: { staggerChildren: 0.08 } },
+};
 
-            login(data.access_token)
+const fieldVariant = {
+  hidden:  { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { ...SPRING } },
+};
 
-            navigate('/dashboard')
-            
-        }
-        catch (err) {
-            setError(err.message)
-        } finally {
-            setLoading(false)
-        }
-    };
+/* ══════════════════════════════════════════════════════════════
+   LOGIN PAGE
+══════════════════════════════════════════════════════════════ */
+export default function Login() {
+  const navigate   = useNavigate();
+  const location   = useLocation();
+  const { user, login } = useContext(UserContext);
+  const registered = location.state?.registered ?? false;
 
-    return (
-        <Container>
-            <Row className="justify-content-center">
-                <Col lg={6} md={8} sm={10} className="login-box p-4">
-                    <div className="login-key">
-                        <img src={loginImg} alt="Login Key" className="key" />
-                    </div>
+  const [email,    setEmail]    = useState("");
+  const [password, setPassword] = useState("");
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState("");
+  const [success,  setSuccess]  = useState(false);
+  const [isNarrow, setIsNarrow] = useState(
+    typeof window !== "undefined" && window.innerWidth < 768
+  );
 
-                    <div className="login-title">
-                        LOGIN
-                    </div>
+  /* redirect if already logged in */
+  useEffect(() => {
+    if (user) navigate(user.role === "instructor" ? "/instructor" : "/ta", { replace: true });
+  }, [user, navigate]);
 
-                    <div className="login-form mt-4">
+  /* reactive responsive: update on resize */
+  useEffect(() => {
+    const handler = () => setIsNarrow(window.innerWidth < 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
 
-                        <Form onSubmit={handleSubmit}>
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (loading || success) return;
+    setError("");
+    setLoading(true);
 
-                            <Form.Group className="mb-4" controlId="formBasicUsername">
-                                <Form.Label className="form-control-label">EMAIL ADDRESS</Form.Label>
-                                <Form.Control
-                                    type="email"
-                                    required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                />
-                            </Form.Group>
+    try {
+      const res  = await fetch("/api/auth/login", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Login failed");
 
-                            <Form.Group className="mb-4" controlId="formBasicPassword">
-                                <Form.Label className="form-control-label">PASSWORD</Form.Label>
-                                <Form.Control
-                                    type="password"
-                                    required
-                                    value={password}
-                                    onChange={(e) => { setPassword(e.target.value); if (error) setError(null) }}
-                                />
-                            </Form.Group>
+      setSuccess(true);
+      login(data);
+      setTimeout(() => {
+        navigate(data.role === "instructor" ? "/instructor" : "/ta");
+      }, 600);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                            {!loading && error && (
-                                <label className="error-message">{error}</label>
-                            )}
+  /* ── styles ── */
+  const S = {
+    root: {
+      display:        "flex",
+      minHeight:      "100dvh",
+      backgroundColor: T.bg,
+      fontFamily:     "Geist, sans-serif",
+      overflow:       "hidden",
+    },
 
-                            <div className="d-flex flex-column align-items-center mt-5 mb-2">
-                                <Button variant="outline-primary" type="submit" className="login-btn mb-3">
-                                    {loading ? 'LOGGING IN...' : 'LOGIN'}
-                                </Button>
+    /* LEFT PANEL */
+    left: {
+      flex:            "0 0 45%",
+      position:        "relative",
+      display:         "flex",
+      flexDirection:   "column",
+      justifyContent:  "space-between",
+      padding:         "clamp(28px, 4vw, 48px)",
+      borderRight:     `1px solid ${T.border}`,
+      overflow:        "hidden",
+    },
+    leftGlow: {
+      position:        "absolute",
+      top:             "30%",
+      left:            "50%",
+      transform:       "translate(-50%, -50%)",
+      width:           "420px",
+      height:          "420px",
+      borderRadius:    "50%",
+      background:      `radial-gradient(circle, ${T.cyanGlow} 0%, transparent 70%)`,
+      pointerEvents:   "none",
+    },
+    leftGlow2: {
+      position:        "absolute",
+      bottom:          "-80px",
+      right:           "-80px",
+      width:           "300px",
+      height:          "300px",
+      borderRadius:    "50%",
+      background:      `radial-gradient(circle, rgba(34,211,238,0.06) 0%, transparent 70%)`,
+      pointerEvents:   "none",
+    },
+    logoRow: {
+      display:         "flex",
+      alignItems:      "center",
+      gap:             "10px",
+      position:        "relative",
+      zIndex:          1,
+    },
+    logoText: {
+      fontFamily:      "Geist, sans-serif",
+      fontWeight:      700,
+      fontSize:        "17px",
+      color:           T.text1,
+      letterSpacing:   "-0.02em",
+    },
+    calloutsWrap: {
+      position:        "relative",
+      zIndex:          1,
+      display:         "flex",
+      flexDirection:   "column",
+      gap:             "20px",
+    },
+    calloutLabel: {
+      fontSize:        "11px",
+      fontWeight:      600,
+      letterSpacing:   "0.12em",
+      textTransform:   "uppercase",
+      color:           T.text3,
+      marginBottom:    "20px",
+    },
+    calloutItem: {
+      display:         "flex",
+      alignItems:      "center",
+      gap:             "12px",
+    },
+    calloutStat: {
+      fontFamily:      "Geist Mono, monospace",
+      fontSize:        "clamp(22px, 2.5vw, 30px)",
+      fontWeight:      700,
+      color:           T.text1,
+      letterSpacing:   "-0.03em",
+      lineHeight:      1,
+      minWidth:        "80px",
+    },
+    calloutText: {
+      fontSize:        "13px",
+      color:           T.text2,
+      lineHeight:      1.4,
+    },
 
-                                <Link to="/register" className="register-text">
-                                    New to GradeOps? Register here!
-                                </Link>
-                            </div>
-                        </Form>
-                    </div>
-                </Col>
-            </Row>
-        </Container>
-    );
+    /* RIGHT PANEL */
+    right: {
+      flex:            1,
+      display:         "flex",
+      alignItems:      "center",
+      justifyContent:  "center",
+      padding:         "clamp(24px, 4vw, 48px)",
+      backgroundColor: T.surface,
+    },
+
+    /* FORM CARD */
+    card: {
+      width:           "100%",
+      maxWidth:        "420px",
+      display:         "flex",
+      flexDirection:   "column",
+      gap:             "0px",
+    },
+    cardLogoRow: {
+      display:         "flex",
+      alignItems:      "center",
+      gap:             "8px",
+      marginBottom:    "32px",
+    },
+    cardLogoText: {
+      fontFamily:      "Geist, sans-serif",
+      fontWeight:      700,
+      fontSize:        "16px",
+      color:           T.text1,
+      letterSpacing:   "-0.02em",
+    },
+    heading: {
+      fontFamily:      "Geist, sans-serif",
+      fontWeight:      900,
+      fontSize:        "clamp(28px, 4vw, 36px)",
+      color:           T.text1,
+      letterSpacing:   "-0.04em",
+      lineHeight:      1.1,
+      marginBottom:    "8px",
+    },
+    subtext: {
+      fontSize:        "14px",
+      color:           T.text2,
+      marginBottom:    "36px",
+      lineHeight:      1.5,
+    },
+    fieldsWrap: {
+      display:         "flex",
+      flexDirection:   "column",
+      gap:             "18px",
+      marginBottom:    "8px",
+    },
+    forgotRow: {
+      display:         "flex",
+      justifyContent:  "flex-end",
+      marginBottom:    "28px",
+      marginTop:       "4px",
+    },
+    forgotLink: {
+      fontSize:        "12px",
+      color:           T.text3,
+      cursor:          "pointer",
+      textDecoration:  "none",
+      transition:      "color 0.2s",
+      background:      "none",
+      border:          "none",
+      padding:         0,
+      fontFamily:      "Geist, sans-serif",
+    },
+    dividerWrap: {
+      display:         "flex",
+      alignItems:      "center",
+      gap:             "12px",
+      margin:          "24px 0",
+    },
+    dividerLine: {
+      flex:            1,
+      height:          "1px",
+      backgroundColor: T.border,
+    },
+    dividerText: {
+      fontSize:        "12px",
+      color:           T.text3,
+      fontFamily:      "Geist Mono, monospace",
+    },
+    registerRow: {
+      textAlign:       "center",
+      fontSize:        "13px",
+      color:           T.text2,
+      marginBottom:    "32px",
+    },
+    registerLink: {
+      color:           T.cyan,
+      cursor:          "pointer",
+      background:      "none",
+      border:          "none",
+      padding:         0,
+      fontFamily:      "Geist, sans-serif",
+      fontSize:        "13px",
+      fontWeight:      600,
+      textDecoration:  "none",
+    },
+    trustRow: {
+      display:         "flex",
+      justifyContent:  "center",
+      gap:             "24px",
+      paddingTop:      "20px",
+      borderTop:       `1px solid ${T.border}`,
+    },
+    trustItem: {
+      display:         "flex",
+      alignItems:      "center",
+      gap:             "6px",
+      color:           T.text3,
+      fontSize:        "11px",
+      fontWeight:      500,
+      letterSpacing:   "0.04em",
+    },
+    errorBox: {
+      display:         "flex",
+      alignItems:      "center",
+      gap:             "10px",
+      padding:         "12px 14px",
+      borderRadius:    "10px",
+      backgroundColor: "rgba(248,113,113,0.08)",
+      border:          `1px solid rgba(248,113,113,0.22)`,
+      color:           T.red,
+      fontSize:        "13px",
+      fontFamily:      "Geist, sans-serif",
+      marginBottom:    "16px",
+    },
+    successBtn: {
+      backgroundColor: T.emerald,
+      color:           T.bg,
+    },
+  };
+
+  return (
+    <div style={S.root}>
+
+      {/* ══ LEFT DECORATIVE PANEL ══ */}
+      {!isNarrow && (
+        <div style={S.left}>
+          {/* ambient glows */}
+          <div style={S.leftGlow} />
+          <div style={S.leftGlow2} />
+
+          {/* logo */}
+          <motion.div
+            style={S.logoRow}
+            variants={fadeUp(0.2)}
+            initial="hidden"
+            animate="visible"
+          >
+            <IconLogo />
+            <span style={S.logoText}>GradeOps</span>
+          </motion.div>
+
+          {/* callouts */}
+          <div style={S.calloutsWrap}>
+            <motion.p
+              style={S.calloutLabel}
+              variants={fadeUp(0.35)}
+              initial="hidden"
+              animate="visible"
+            >
+              Platform at a glance
+            </motion.p>
+
+            {CALLOUTS.map((c, i) => (
+              <motion.div
+                key={c.stat}
+                style={S.calloutItem}
+                variants={fadeUp(0.4 + i * 0.15)}
+                initial="hidden"
+                animate="visible"
+              >
+                <Dot color={T.cyan} />
+                <span style={S.calloutStat}>{c.stat}</span>
+                <span style={S.calloutText}>{c.label}</span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ══ RIGHT FORM PANEL ══ */}
+      <div style={S.right}>
+        <motion.div
+          style={S.card}
+          variants={fadeUp(0.3)}
+          initial="hidden"
+          animate="visible"
+        >
+          {/* card logo */}
+          <div style={S.cardLogoRow}>
+            <IconLogo />
+            <span style={S.cardLogoText}>GradeOps</span>
+          </div>
+
+          {/* registered success banner */}
+          <AnimatePresence>
+            {registered && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ ...SPRING }}
+                style={{
+                  display:         "flex",
+                  alignItems:      "center",
+                  gap:             "8px",
+                  padding:         "11px 14px",
+                  borderRadius:    "10px",
+                  backgroundColor: T.emeraldDim,
+                  border:          `1px solid ${T.emeraldGlow}`,
+                  color:           T.emerald,
+                  fontSize:        "13px",
+                  marginBottom:    "20px",
+                  overflow:        "hidden",
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.emerald} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Account created! Sign in to continue.
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* heading */}
+          <h1 style={S.heading}>Welcome back.</h1>
+          <p style={S.subtext}>Sign in to your grading workspace.</p>
+
+          {/* form */}
+          <form onSubmit={handleSubmit} noValidate>
+
+            {/* fields */}
+            <motion.div
+              style={S.fieldsWrap}
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+            >
+              <motion.div variants={fieldVariant}>
+                <FLInput
+                  id="email"
+                  label="Email Address"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                />
+              </motion.div>
+
+              <motion.div variants={fieldVariant}>
+                <FLInput
+                  id="password"
+                  label="Password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                />
+              </motion.div>
+            </motion.div>
+
+            {/* forgot password */}
+            <div style={S.forgotRow}>
+              <motion.button
+                type="button"
+                style={S.forgotLink}
+                whileHover={{ color: T.cyan }}
+                onClick={() => {}}
+              >
+                Forgot password?
+              </motion.button>
+            </div>
+
+            {/* error message */}
+            <AnimatePresence mode="wait">
+              {error && (
+                <motion.div
+                  key="error"
+                  style={S.errorBox}
+                  initial={{ opacity: 0, y: -6, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: "auto" }}
+                  exit={{ opacity: 0, y: -4, height: 0 }}
+                  transition={{ duration: 0.18 }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.red} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* submit button */}
+            <motion.div
+              animate={success ? { scale: [1, 0.97, 1] } : {}}
+              transition={{ duration: 0.3 }}
+            >
+              <MagBtn
+                type="submit"
+                variant={success ? "ghost" : "primary"}
+                size="lg"
+                style={{
+                  width:           "100%",
+                  justifyContent:  "center",
+                  ...(success ? {
+                    backgroundColor: T.emeraldDim,
+                    border:          `1px solid ${T.emerald}`,
+                    color:           T.emerald,
+                  } : {}),
+                }}
+              >
+                {loading ? (
+                  <>
+                    <LoadingSpinner />
+                    <span style={{ marginLeft: "8px" }}>Signing in…</span>
+                  </>
+                ) : success ? (
+                  <>
+                    <IconCheck />
+                    <span style={{ marginLeft: "6px" }}>Signed in</span>
+                  </>
+                ) : (
+                  "Sign in"
+                )}
+              </MagBtn>
+            </motion.div>
+
+          </form>
+
+          {/* divider */}
+          <div style={S.dividerWrap}>
+            <div style={S.dividerLine} />
+            <span style={S.dividerText}>or</span>
+            <div style={S.dividerLine} />
+          </div>
+
+          {/* register link */}
+          <div style={S.registerRow}>
+            New to GradeOps?{" "}
+            <motion.button
+              type="button"
+              style={S.registerLink}
+              whileHover={{ opacity: 0.8 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate("/register")}
+            >
+              Register here
+            </motion.button>
+          </div>
+
+          {/* trust row */}
+          <div style={S.trustRow}>
+            {TRUST.map((t) => (
+              <div key={t.label} style={S.trustItem}>
+                {t.icon}
+                <span>{t.label}</span>
+              </div>
+            ))}
+          </div>
+
+        </motion.div>
+      </div>
+
+    </div>
+  );
 }
-
-export default Login;
