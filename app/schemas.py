@@ -1,5 +1,6 @@
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 from typing import Optional, Dict, Any
+from datetime import datetime
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -27,6 +28,22 @@ class ExamResponse(BaseModel):
     title: str
     rubric: Dict[str, Any]
     instructor_id: int
+    model_config = ConfigDict(from_attributes=True)
+
+class Exam_Instructor_Response(BaseModel):
+    id: int
+    title: str
+    uploaded: str
+    scripts: int
+    graded: int
+    status: str= Field(..., pattern="^(Completed|In Review|Processing)")
+
+    @field_validator('uploaded', mode='before')
+    def format_date(cls, value):
+        if isinstance(value, datetime):
+            return value.strftime("%b %d, %Y")
+        return value
+
     model_config = ConfigDict(from_attributes=True)
 
 class SubmissionResponse(BaseModel):

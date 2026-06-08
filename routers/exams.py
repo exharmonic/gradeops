@@ -29,3 +29,12 @@ async def add_exam(exam: schemas.ExamCreate, current_user: models.User = Depends
     db.refresh(new_exam)
 
     return new_exam
+
+@router.get("/", response_model=list[schemas.Exam_Instructor_Response])
+async def get_instructor_exams(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.role != "instructor":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+    
+    exams = db.query(models.Exam).filter(models.Exam.instructor_id == current_user.id).all()
+
+    return exams

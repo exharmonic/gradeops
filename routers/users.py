@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from app.auth import get_current_user
 import app.models as models
 
@@ -15,3 +15,14 @@ async def read_users_me(current_user: models.User = Depends(get_current_user)):
         "email": current_user.email,
         "role": current_user.role
     }
+@router.get("/logout")
+async def logout(response: Response):
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=True,
+        samesite="lax"
+    )
+    return {
+        "message" : "Logout successful!"
+    } 

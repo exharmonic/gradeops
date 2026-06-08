@@ -1,6 +1,7 @@
 from app.database import Base
-from sqlalchemy import Column, Integer, String, JSON, ForeignKey
+from sqlalchemy import Column, Integer, String, JSON, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
 class User(Base):
     __tablename__ = "users"
@@ -17,6 +18,10 @@ class Exam(Base):
     title = Column(String, nullable=False)
     rubric = Column(JSON, nullable=False) 
     instructor_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    uploaded = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    scripts = Column(Integer, nullable=False, server_default="0")
+    graded = Column(Integer, nullable=False, server_default="0")
+    status = Column(String, nullable=False, server_default="Processing")
     instructor = relationship("User")
 
 class Submission(Base):
