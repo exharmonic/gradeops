@@ -7,9 +7,9 @@ import { UserContext } from "../context/UserContext";
 import Sidebar from "../components/Sidebar";
 import api from "../services/api";
 
-/* ══════════════════════════════════════════════════════════════
+/* 
    INLINE ICONS
-══════════════════════════════════════════════════════════════ */
+ */
 const Ico = {
   Upload: () => (
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
@@ -77,9 +77,9 @@ const Ico = {
   ),
 };
 
-/* ══════════════════════════════════════════════════════════════
+/* 
    HOOKS
-══════════════════════════════════════════════════════════════ */
+ */
 function useCountUp(target, duration = 1200) {
   const [count, setCount] = useState(0);
   useEffect(() => {
@@ -106,9 +106,9 @@ function useBreakpoint() {
   return { isMobile: w < 768, isTablet: w >= 768 && w < 1024 };
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* 
    MOCK DATA
-══════════════════════════════════════════════════════════════ */
+ */
 
 async function get_exams() {
   try {
@@ -170,9 +170,9 @@ const RUBRIC_PLACEHOLDER = `{
   ]
 }`;
 
-/* ══════════════════════════════════════════════════════════════
+/* 
    SMALL SHARED COMPONENTS
-══════════════════════════════════════════════════════════════ */
+ */
 const StatusBadge = ({ status }) => {
   const map = {
     Processing: { color: "#f59e0b", bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.22)" },
@@ -248,9 +248,9 @@ const rowItem = {
   visible: { opacity: 1, y: 0, transition: { ...SPRING } },
 };
 
-/* ══════════════════════════════════════════════════════════════
+/* 
    STAT CARD
-══════════════════════════════════════════════════════════════ */
+ */
 function StatCard({ label, value, trend, trendUp, accent }) {
   const displayed = useCountUp(value);
   return (
@@ -278,9 +278,9 @@ function StatCard({ label, value, trend, trendUp, accent }) {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* 
    SECTION 1 — OVERVIEW
-══════════════════════════════════════════════════════════════ */
+ */
 function SectionOverview({ exams }) {
   return (
     <motion.div key="overview" {...sectionTransition}>
@@ -290,7 +290,7 @@ function SectionOverview({ exams }) {
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", marginBottom: "32px" }}
       >
         <StatCard label="Total Exams" value={exams.length} trend="+2" trendUp />
-        <StatCard label="Exams Graded" value={exams.reduce((acc, curr) => { return acc + curr.graded;}, 0)} trend="+134" trendUp />
+        <StatCard label="Exams Graded" value={exams.reduce((acc, curr) => { return acc + curr.graded; }, 0)} trend="+134" trendUp />
         <StatCard label="Pending Review" value={exams.filter(exam => exam.status === "In Review").length} trend="+18" trendUp accent={T.cyan} />
         <StatCard label="Flagged" value={0} trend="+3" trendUp={false} accent={T.red} />
       </motion.div>
@@ -337,10 +337,10 @@ function SectionOverview({ exams }) {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* 
    SECTION 2 — UPLOAD EXAM
-══════════════════════════════════════════════════════════════ */
-function SectionExams({ exams }) {
+ */
+function SectionExams({ exams, onUploadSuccess }) {
   const [dragOver, setDragOver] = useState(false);
   const [files, setFiles] = useState([]);
   const [rubricJson, setRubricJson] = useState(RUBRIC_PLACEHOLDER);
@@ -368,10 +368,56 @@ function SectionExams({ exams }) {
   };
 
   const handleUpload = async () => {
+    if (files.length == 0) {
+      alert("Please drop or select PDF files first.")
+      return;
+    }
+    let parsedRubric;
+    try {
+      parsedRubric = JSON.parse(rubricJson);
+      setJsonValid(true);
+    } catch {
+      setJsonValid(false);
+      alert("Your rubric JSON is invalid. Please fix syntax errors before uploading.");
+      return;
+    }
+
     setUploading(true);
-    await new Promise(r => setTimeout(r, 2000));
-    setUploading(false);
-    setFiles([]);
+
+    try {
+      const title = parsedRubric.exam || "New Exam Batch";
+
+      const response = await api.post('/exams/', {
+        title: title,
+        rubric: parsedRubric
+      });
+
+      const exam_id = response.data.id;
+
+      const formData = new FormData();
+
+      files.forEach((f) => {
+        formData.append("files", f.file);
+      });
+      formData.append("exam_id", exam_id);
+
+      await api.post('/upload/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      setFiles([]);
+      if (onUploadSuccess) onUploadSuccess();
+
+    } catch (err) {
+      console.log(err);
+      const errMsg = err.response?.data?.detail || "Failed to upload files.";
+      alert(`Error: ${errMsg}`);
+      return;
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -475,7 +521,7 @@ function SectionExams({ exams }) {
           <div style={{ padding: "16px 20px", borderBottom: `1px solid ${T.border}`, fontSize: "13px", fontWeight: 600, color: T.text1 }}>Uploaded Batches</div>
           <motion.div variants={rowStagger} initial="hidden" animate="visible" style={{ padding: "12px" }}>
             {exams.map((exam) => {
-              const pct = Math.round((exam.graded / exam.scripts) * 100);
+              const pct = exam.scripts > 0 ? Math.round((exam.graded / exam.scripts) * 100) : 0;
               return (
                 <motion.div key={exam.id} variants={rowItem}
                   style={{ padding: "14px", borderRadius: "10px", marginBottom: "8px", backgroundColor: T.surfaceHigh }}>
@@ -503,9 +549,9 @@ function SectionExams({ exams }) {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* 
    SECTION 3 — RUBRICS
-══════════════════════════════════════════════════════════════ */
+ */
 function SectionRubrics() {
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState("");
@@ -572,9 +618,9 @@ function SectionRubrics() {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* 
    SECTION 4 — GRADES
-══════════════════════════════════════════════════════════════ */
+ */
 function SectionGrades() {
   const [search, setSearch] = useState("");
   const [releasing, setReleasing] = useState(false);
@@ -683,9 +729,9 @@ function SectionGrades() {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* 
    SECTION 5 — AUDIT LOG
-══════════════════════════════════════════════════════════════ */
+ */
 function SectionAudit() {
   const [typeFilter, setTypeFilter] = useState("ALL");
   const types = ["ALL", "GRADED", "OVERRIDDEN", "FLAGGED", "RELEASED", "UPLOADED"];
@@ -737,9 +783,9 @@ function SectionAudit() {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* 
    SECTION TITLES
-══════════════════════════════════════════════════════════════ */
+ */
 const SECTION_META = {
   overview: { title: "Overview", sub: "Your grading workspace at a glance" },
   exams: { title: "Exams", sub: "Upload and manage exam batches" },
@@ -758,9 +804,9 @@ const PATH_TO_SECTION = {
   "/instructor/settings": "settings",
 };
 
-/* ══════════════════════════════════════════════════════════════
+/* 
    INSTRUCTOR DASHBOARD
-══════════════════════════════════════════════════════════════ */
+ */
 export default function InstructorDashboard() {
   const navigate = useNavigate();
   const { user } = useContext(UserContext);
@@ -779,22 +825,25 @@ export default function InstructorDashboard() {
 
   useEffect(() => {
     if (!user) return;
-
-    const fetchExams = async () => {
-      try {
-        setLoadingExams(true);
-        const response = await api.get('/exams/');
-        setExams(response.data);
-      } catch (err) {
-        console.error("Failed to fetch exams", err);
-        setExams([]);
-      } finally {
-        setLoadingExams(false);
-      }
-    };
-
-    fetchExams();
   }, [user]);
+
+  const fetchExams = useCallback(async () => {
+    if (!user) return;
+    try {
+      setLoadingExams(true);
+      const response = await api.get('/exams/');
+      setExams(response.data);
+    } catch (err) {
+      console.error("Failed to fetch exams", err);
+      setExams([]);
+    } finally {
+      setLoadingExams(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchExams();
+  }, [fetchExams]);
 
   const sidebarW = 220;
 
@@ -827,8 +876,8 @@ export default function InstructorDashboard() {
 
         <div style={{ flex: 1, overflowY: "auto", padding: "28px" }}>
           <AnimatePresence mode="wait">
-            {section === "overview" && <SectionOverview key="overview" exams={exams}/>}
-            {section === "exams" && <SectionExams key="exams" exams={exams}/>}
+            {section === "overview" && <SectionOverview key="overview" exams={exams} />}
+            {section === "exams" && <SectionExams key="exams" exams={exams} onUploadSuccess={fetchExams} />}
             {section === "rubrics" && <SectionRubrics key="rubrics" />}
             {section === "grades" && <SectionGrades key="grades" />}
             {section === "audit" && <SectionAudit key="audit" />}

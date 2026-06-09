@@ -5,7 +5,7 @@ import Sidebar from "../components/Sidebar";
 import { MagBtn, LoadingSpinner, Dot } from "../components/ui";
 import T, { SPRING, SPRING_LG, EASE_EXPO } from "../tokens";
 
-// ─── Section routing ──────────────────────────────────────────────────────────
+// Section routing
 const PATH_TO_SECTION = {
   "/ta":           "queue",
   "/ta/progress":  "progress",
@@ -22,7 +22,7 @@ const SECTION_META = {
   settings:  { title: "Settings",      sub: "Configure your account and preferences"     },
 };
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
+// Mock Data
 const MOCK_QUEUE = [
   {
     id: "q1", studentId: "STU-2847", questionRef: "Q3b",
@@ -128,14 +128,14 @@ const MOCK_QUEUE = [
   },
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 const confidenceColor = (c) => c >= 80 ? T.emerald : c >= 60 ? "#f59e0b" : T.red;
 const confidenceBg    = (c) => c >= 80 ? T.emeraldDim : c >= 60 ? "rgba(245,158,11,0.10)" : "rgba(248,113,113,0.10)";
 const statusColor = { pending: T.text2, flagged: "#f59e0b", completed: T.emerald };
 const statusLabel = { pending: "Pending", flagged: "Flagged", completed: "Done" };
 const matchColors = { full: T.emerald, partial: "#f59e0b", none: T.red };
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
+// Toast
 const Toast = ({ message, onDone }) => {
   useEffect(() => {
     const t = setTimeout(onDone, 2500);
@@ -162,7 +162,7 @@ const Toast = ({ message, onDone }) => {
   );
 };
 
-// ─── Queue Item ───────────────────────────────────────────────────────────────
+// Queue Item
 const QueueItem = ({ item, selected, onClick, sessionStatuses }) => {
   const liveStatus = sessionStatuses[item.id] || item.status;
   return (
@@ -198,7 +198,7 @@ const QueueItem = ({ item, selected, onClick, sessionStatuses }) => {
   );
 };
 
-// ─── Section Wrapper ──────────────────────────────────────────────────────────
+// Section Wrapper 
 function Section({ label, title, children }) {
   return (
     <div style={{ marginBottom: 28 }}>
@@ -212,7 +212,7 @@ function Section({ label, title, children }) {
   );
 }
 
-// ─── Section views ────────────────────────────────────────────────────────────
+// Section views
 const sectionTransition = {
   initial: { opacity: 0, y: 14 },
   animate: { opacity: 1, y: 0, transition: { ...SPRING_LG } },
@@ -329,7 +329,7 @@ function SectionFlagged({ items, sessionStatuses }) {
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// Main Component
 export default function TADashboard() {
   const navigate = useNavigate();
   const [activeRoute,      setActiveRoute]      = useState("/ta");
@@ -432,7 +432,7 @@ export default function TADashboard() {
     if (filteredQueue.length > 0 && !filteredQueue.find((i) => i.id === selectedId)) {
       selectItem(filteredQueue[0]);
     }
-  }, [filter]); // eslint-disable-line
+  }, [filter]);
 
   const progressPct = totalSession > 0 ? (sessionReviewed / totalSession) * 100 : 0;
 
