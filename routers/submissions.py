@@ -85,6 +85,7 @@ def upload_files(
 
             created_img_dirs.append(imgs_destination)
             saved_submissions.append(student_id)
+            exam.scripts += len(saved_submissions)
         
         db.commit()
 
