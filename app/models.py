@@ -33,6 +33,6 @@ class Submission(Base):
     images_path = Column(String, nullable=False)
     ai_score = Column(Integer, nullable=True) 
     ai_justification = Column(String, nullable=True)
-    status = Column(String, server_default="pending", nullable=False) 
+    status = Column(String, server_default="processing", nullable=False) 
     exam_id = Column(Integer, ForeignKey("exams.id", ondelete="CASCADE"), nullable=False)
     exam = relationship("Exam")

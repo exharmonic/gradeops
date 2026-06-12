@@ -50,10 +50,16 @@ class SubmissionResponse(BaseModel):
     id: int
     student_roll_no: str
     pdf_path: str
-    image_path: str
+    images_path: str
     ai_score: Optional[int] = None
     ai_justification: Optional[str] = None
     status: str
     exam_id: int
 
     model_config = ConfigDict(from_attributes = True)
+
+class TAActionPayload(BaseModel):
+    action: str
+    q_ref: str | None = None
+    new_score: int | None = None
+    reason: str | None = None 

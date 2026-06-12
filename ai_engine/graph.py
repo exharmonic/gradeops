@@ -7,7 +7,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langgraph.graph import StateGraph, END
-from langgraph.types import interrupt, Command
+from langgraph.types import interrupt
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_google_genai import ChatGoogleGenerativeAI
 
@@ -91,7 +91,7 @@ def run_nemotron_ocr_node(state: GradingState):
                         "3. STRUCTURE: Preserve explicit question labels (e.g., 'Q1)', '2a.') clearly on new lines to maintain the document hierarchy. "
                         "4. NOISE FILTERING: Completely ignore scribbles, explicitly crossed-out text, smudges, and page numbers. "
                         "5. BOUNDARIES: Do not attempt to solve, grade, or evaluate the text. Output ONLY the corrected transcription."
-                        "If you output any conversational words, THE SYSTEM AND DATABASE WILL ALL CRASH!!",
+                        "DO NOT input any conversational text, else THE SYSTEM AND DATABASE WILL ALL CRASH!! Your response must be exactly the transcription, not a word more, not a word less.",
                     },
                     {
                         "type": "image_url",
@@ -109,10 +109,52 @@ def run_nemotron_ocr_node(state: GradingState):
     return {"ocr_text": full_transcription, "status": "ocr_completed"}
 
 
+def human_intervention_decider(state: GradingState):
+    print("--- Waiting for Human Review of AI Grading ---")
+    human_review = interrupt(
+        {
+            "message": "Please review the AI grading results.",
+            "ai_score": state.get("detailed_analysis", {})
+            .get("questions", [{}])[0]
+            .get("aiScore"),
+            "ai_justification": state.get("detailed_analysis", {})
+            .get("questions", [{}])[0]
+            .get("aiJustification"),
+            "full_json": state.get("detailed_analysis", {}),
+        }
+    )
+
+    action = human_review.get("action").lower().strip()
+
+    if action == "approve":
+        return {"status": "approved"}
+    elif action == "override":
+        q_ref = human_review.get("q_ref")
+        new_score = human_review.get("new_score")
+        reason = human_review.get("reason", "No reason provided.")
+
+        updated_analysis = state.get("detailed_analysis", {})
+
+        question_found = False
+        for q_dict in updated_analysis.get("questions", []):
+            if q_dict.get("questionRef") == q_ref:
+                q_dict["aiScore"] = int(new_score)
+                original_justification = q_dict.get("aiJustification", "")
+                q_dict["aiJustification"] = f"[TA OVERRIDE]: {reason} \n(Original AI Logic: {original_justification})"
+                question_found = True
+                break
+        if not question_found:
+            print("No question found to override.")
+
+        return {
+            "status": "overriden",
+            "detailed_analysis": updated_analysis,
+        }
+
 def grade_with_gemini_model(state: GradingState):
     print("--- [NODE 2] GRADING ANSWER SCRIPT USING GEMINI ---")
 
-    gemini_model = ChatGoogleGenerativeAI(model="gemini-3.5-flash", temperature=0.0)
+    gemini_model = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite", temperature=0.0)
 
     structured_gemini = gemini_model.with_structured_output(FullExamGradingResult)
 
@@ -141,64 +183,62 @@ def grade_with_gemini_model(state: GradingState):
         return {"status": "error_grading"}
 
 
-# def human_intervention_decider(state: GradingState):
-#     print("waiting for user input")
-#     decision = interrupt(
-#         {"Would you like to continue the transcription to the LLM? (yes/no)"}
-#     )
-#     approval = decision.get("approval", "").lower().strip()
-#     if approval == "yes":
-#         return Command(goto="gemini_grader")
-#     else:
-#         return Command(goto=END)
+# def feeedback_router(state: GradingState) -> str:
+#     if state["status"] == "approved":
+#         return END
+#     if state["status"] == "feeedback":
+#         return "gemini_grader"
 
 
 builder = StateGraph(GradingState)
 
 builder.add_node("nemotron_ocr", run_nemotron_ocr_node)
 builder.add_node("gemini_grader", grade_with_gemini_model)
-# builder.add_node("human_intervention", human_intervention_decider)
+builder.add_node("human_intervention", human_intervention_decider)
 
 builder.set_entry_point("nemotron_ocr")
 builder.add_edge("nemotron_ocr", "gemini_grader")
-# builder.add_edge("nemotron_ocr", "human_intervention")
-builder.add_edge("gemini_grader", END)
+builder.add_edge("gemini_grader", "human_intervention")
+builder.add_edge("human_intervention", END)
+# builder.add_conditional_edges(
+#     "human_intervention", feeedback_router, {END: END, "gemini_grader": "gemini_grader"}
+# )
+# builder.add_edge("gemini_grader", END)
 
 memory = MemorySaver()
 
 graph = builder.compile(checkpointer=memory)
-config = {"configurable": {"thread_id": "thread"}}
 
 # Local testing
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    initial_state = {
-        "submission_id": 1,
-        "page_img_paths": [
-            "uploads/exams/exam_1/images/Adobe_Scan_11_Jun_2026/page-1.png"
-        ],
-        "rubric": {
-            "exam": "CS301 Midterm",
-            "questions": [
-                {
-                    "id": "Q1",
-                    "text": "Explain time complexity of quicksort.",
-                    "points": 10,
-                    "keywords": ["O(n log n)", "average case", "pivot"],
-                    "partial_credit": True,
-                }
-            ],
-        },
-        "ocr_text": "",
-        "detailed_analysis": {},
-        "status": "started",
-    }
-    print("Initializing GradeOps AI Pipeline...")
-    start_time = time.perf_counter()
-    final_state = graph.invoke(initial_state, config=config)
-    end_time = time.perf_counter()
+#     initial_state = {
+#         "submission_id": 1,
+#         "page_img_paths": [
+#             "uploads/exams/exam_1/images/Adobe_Scan_11_Jun_2026/page-2.png"
+#         ],
+#         "rubric": {
+#             "exam": "CS301 Midterm",
+#             "questions": [
+#                 {
+#                     "id": "Q1",
+#                     "text": "Explain time complexity of quicksort.",
+#                     "points": 10,
+#                     "keywords": ["O(n log n)", "average case", "pivot"],
+#                     "partial_credit": True,
+#                 }
+#             ],
+#         },
+#         "ocr_text": "",
+#         "detailed_analysis": {},
+#         "status": "started",
+#     }
+#     print("Initializing GradeOps AI Pipeline...")
+#     start_time = time.perf_counter()
+#     final_state = graph.invoke(initial_state)
+#     end_time = time.perf_counter()
 
-    print("\n\n=== FINAL GRADED OUTPUT ===")
-    print(json.dumps(final_state.get("detailed_analysis", {}), indent=2))
-    print(f"Time taken to execute: {end_time-start_time:.6f} seconds")
+#     print("\n\n=== FINAL GRADED OUTPUT ===")
+#     print(json.dumps(final_state.get("detailed_analysis", {}), indent=2))
+#     print(f"Time taken to execute: {end_time-start_time:.6f} seconds")
