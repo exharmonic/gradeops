@@ -13,19 +13,71 @@ const IconLogo = () => (
   </svg>
 );
 
-const IconInfo = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.cyan} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" />
-    <line x1="12" y1="16" x2="12" y2="12" />
-    <line x1="12" y1="8" x2="12.01" y2="8" />
-  </svg>
-);
-
 const IconCheck = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.emerald} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="20 6 9 17 4 12" />
   </svg>
 );
+
+// ─── Eye icon for show/hide password ─────────────────────────────────────────
+function EyeIcon({ open }) {
+  return open ? (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  ) : (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
+      <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  );
+}
+
+// ─── Password input with show/hide toggle ────────────────────────────────────
+function PasswordInput({ id, label, value, onChange, autoComplete }) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div style={{ position: "relative" }}>
+      <FLInput
+        id={id}
+        label={label}
+        type={visible ? "text" : "password"}
+        value={value}
+        onChange={onChange}
+        required
+        autoComplete={autoComplete}
+      />
+      <button
+        type="button"
+        onClick={() => setVisible(v => !v)}
+        aria-label={visible ? "Hide password" : "Show password"}
+        style={{
+          position:   "absolute",
+          right:      12,
+          top:        "50%",
+          transform:  "translateY(-50%)",
+          background: "none",
+          border:     "none",
+          cursor:     "pointer",
+          color:      T.text3,
+          display:    "flex",
+          alignItems: "center",
+          padding:    4,
+          borderRadius: 4,
+          transition: "color 0.15s",
+          lineHeight: 0,
+        }}
+        onMouseEnter={e => e.currentTarget.style.color = T.cyan}
+        onMouseLeave={e => e.currentTarget.style.color = T.text3}
+      >
+        <EyeIcon open={visible} />
+      </button>
+    </div>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 const PIPELINE_STEPS = [
   { label: "Upload",    sub: "Bulk PDF ingestion & rubric JSON",       color: T.cyan    },
@@ -41,11 +93,11 @@ const ROLE_OPTIONS = [
 ];
 
 function getStrength(pw) {
-  if (!pw)        return { level: 0, label: "",           color: T.border    };
-  if (pw.length < 6)  return { level: 1, label: "Weak",   color: T.red       };
-  if (pw.length < 10) return { level: 2, label: "Fair",   color: "#f59e0b"   };
-  if (pw.length < 14) return { level: 3, label: "Strong", color: T.cyan      };
-  return               { level: 4, label: "Very strong",  color: T.emerald   };
+  if (!pw)            return { level: 0, label: "",           color: T.border  };
+  if (pw.length < 6)  return { level: 1, label: "Weak",       color: T.red     };
+  if (pw.length < 10) return { level: 2, label: "Fair",       color: "#f59e0b" };
+  if (pw.length < 14) return { level: 3, label: "Strong",     color: T.cyan    };
+  return               { level: 4, label: "Very strong",      color: T.emerald };
 }
 
 const fadeUp = (delay = 0) => ({
@@ -74,14 +126,14 @@ const staggerSteps = {
 };
 
 const fieldErrorVariant = {
-  hidden:  { opacity: 0, y: -6, height: 0    },
+  hidden:  { opacity: 0, y: -6, height: 0      },
   visible: { opacity: 1, y: 0,  height: "auto" },
-  exit:    { opacity: 0, y: -4, height: 0,   transition: { duration: 0.14 } },
+  exit:    { opacity: 0, y: -4, height: 0,     transition: { duration: 0.14 } },
 };
 
 export default function Register() {
-  const navigate        = useNavigate();
-  const { user }        = useContext(UserContext);
+  const navigate    = useNavigate();
+  const { user }    = useContext(UserContext);
 
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
@@ -139,10 +191,10 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const response  = await api.post('/register', {
-        email: email,
-        password: password,
-        role: role
+      await api.post('/register', {
+        email,
+        password,
+        role,
       });
 
       setSuccess(true);
@@ -151,7 +203,7 @@ export default function Register() {
       }, 600);
     } catch (err) {
       setApiError(err.response?.data?.detail || "Registration failed");
-      console.log(err)
+      console.log(err);
     } finally {
       setLoading(false);
     }
@@ -191,79 +243,64 @@ export default function Register() {
     },
 
     cardLogoRow: {
-      display:        "flex",
-      alignItems:     "center",
-      gap:            "8px",
-      marginBottom:   "28px",
+      display:      "flex",
+      alignItems:   "center",
+      gap:          "8px",
+      marginBottom: "28px",
     },
     cardLogoText: {
-      fontWeight:     700,
-      fontSize:       "16px",
-      color:          T.text1,
-      letterSpacing:  "-0.02em",
+      fontWeight:    700,
+      fontSize:      "16px",
+      color:         T.text1,
+      letterSpacing: "-0.02em",
     },
     heading: {
-      fontWeight:     900,
-      fontSize:       "clamp(28px, 4vw, 36px)",
-      color:          T.text1,
-      letterSpacing:  "-0.04em",
-      lineHeight:     1.1,
-      marginBottom:   "8px",
+      fontWeight:    900,
+      fontSize:      "clamp(28px, 4vw, 36px)",
+      color:         T.text1,
+      letterSpacing: "-0.04em",
+      lineHeight:    1.1,
+      marginBottom:  "8px",
     },
     subtext: {
-      fontSize:       "14px",
-      color:          T.text2,
-      marginBottom:   "32px",
-      lineHeight:     1.5,
+      fontSize:     "14px",
+      color:        T.text2,
+      marginBottom: "32px",
+      lineHeight:   1.5,
     },
 
     fieldsWrap: {
-      display:        "flex",
-      flexDirection:  "column",
-      gap:            "18px",
-      marginBottom:   "24px",
+      display:       "flex",
+      flexDirection: "column",
+      gap:           "18px",
+      marginBottom:  "24px",
     },
 
     strengthWrap: {
-      marginTop:      "8px",
-      display:        "flex",
-      flexDirection:  "column",
-      gap:            "5px",
+      marginTop:     "8px",
+      display:       "flex",
+      flexDirection: "column",
+      gap:           "5px",
     },
     strengthTrack: {
-      display:        "flex",
-      gap:            "4px",
-      height:         "3px",
+      display: "flex",
+      gap:     "4px",
+      height:  "3px",
     },
     strengthLabel: {
-      fontSize:       "11px",
-      fontFamily:     "Geist Mono, monospace",
-      letterSpacing:  "0.06em",
-      color:          T.text3,
-      transition:     "color 0.3s",
+      fontSize:      "11px",
+      fontFamily:    "Geist Mono, monospace",
+      letterSpacing: "0.06em",
+      color:         T.text3,
+      transition:    "color 0.3s",
     },
 
     fieldError: {
-      fontSize:       "12px",
-      color:          T.red,
-      marginTop:      "5px",
-      fontFamily:     "Geist, sans-serif",
-      overflow:       "hidden",
-    },
-
-    infoBox: {
-      display:         "flex",
-      alignItems:      "flex-start",
-      gap:             "10px",
-      padding:         "12px 14px",
-      borderRadius:    "10px",
-      backgroundColor: T.cyanDim,
-      border:          `1px solid rgba(34,211,238,0.18)`,
-      color:           T.text2,
-      fontSize:        "12.5px",
-      lineHeight:      1.55,
-      marginBottom:    "4px",
-      overflow:        "hidden",
+      fontSize:   "12px",
+      color:      T.red,
+      marginTop:  "5px",
+      fontFamily: "Geist, sans-serif",
+      overflow:   "hidden",
     },
 
     apiErrorBox: {
@@ -281,83 +318,83 @@ export default function Register() {
     },
 
     signInRow: {
-      textAlign:      "center",
-      fontSize:       "13px",
-      color:          T.text2,
-      marginTop:      "24px",
+      textAlign: "center",
+      fontSize:  "13px",
+      color:     T.text2,
+      marginTop: "24px",
     },
     signInLink: {
-      color:          T.cyan,
-      cursor:         "pointer",
-      background:     "none",
-      border:         "none",
-      padding:        0,
-      fontFamily:     "Geist, sans-serif",
-      fontSize:       "13px",
-      fontWeight:     600,
+      color:      T.cyan,
+      cursor:     "pointer",
+      background: "none",
+      border:     "none",
+      padding:    0,
+      fontFamily: "Geist, sans-serif",
+      fontSize:   "13px",
+      fontWeight: 600,
     },
 
     right: {
-      flex:            "0 0 45%",
-      position:        "relative",
-      display:         "flex",
-      flexDirection:   "column",
-      justifyContent:  "center",
-      padding:         "clamp(28px, 4vw, 64px)",
-      borderLeft:      `1px solid ${T.border}`,
-      overflow:        "hidden",
+      flex:           "0 0 45%",
+      position:       "relative",
+      display:        "flex",
+      flexDirection:  "column",
+      justifyContent: "center",
+      padding:        "clamp(28px, 4vw, 64px)",
+      borderLeft:     `1px solid ${T.border}`,
+      overflow:       "hidden",
     },
     rightGlow: {
-      position:        "absolute",
-      top:             "40%",
-      left:            "50%",
-      transform:       "translate(-50%, -50%)",
-      width:           "400px",
-      height:          "400px",
-      borderRadius:    "50%",
-      background:      `radial-gradient(circle, ${T.emeraldGlow} 0%, transparent 70%)`,
-      pointerEvents:   "none",
+      position:      "absolute",
+      top:           "40%",
+      left:          "50%",
+      transform:     "translate(-50%, -50%)",
+      width:         "400px",
+      height:        "400px",
+      borderRadius:  "50%",
+      background:    `radial-gradient(circle, ${T.emeraldGlow} 0%, transparent 70%)`,
+      pointerEvents: "none",
     },
     rightGlow2: {
-      position:        "absolute",
-      top:             "-60px",
-      left:            "-60px",
-      width:           "260px",
-      height:          "260px",
-      borderRadius:    "50%",
-      background:      `radial-gradient(circle, rgba(34,211,238,0.06) 0%, transparent 70%)`,
-      pointerEvents:   "none",
+      position:      "absolute",
+      top:           "-60px",
+      left:          "-60px",
+      width:         "260px",
+      height:        "260px",
+      borderRadius:  "50%",
+      background:    `radial-gradient(circle, rgba(34,211,238,0.06) 0%, transparent 70%)`,
+      pointerEvents: "none",
     },
     panelLabel: {
-      fontSize:        "11px",
-      fontWeight:      600,
-      letterSpacing:   "0.12em",
-      textTransform:   "uppercase",
-      color:           T.text3,
-      marginBottom:    "36px",
-      position:        "relative",
-      zIndex:          1,
+      fontSize:      "11px",
+      fontWeight:    600,
+      letterSpacing: "0.12em",
+      textTransform: "uppercase",
+      color:         T.text3,
+      marginBottom:  "36px",
+      position:      "relative",
+      zIndex:        1,
     },
 
     pipelineWrap: {
-      position:        "relative",
-      zIndex:          1,
-      display:         "flex",
-      flexDirection:   "column",
+      position:      "relative",
+      zIndex:        1,
+      display:       "flex",
+      flexDirection: "column",
     },
     stepRow: {
-      display:         "flex",
-      alignItems:      "flex-start",
-      gap:             "16px",
-      position:        "relative",
+      display:    "flex",
+      alignItems: "flex-start",
+      gap:        "16px",
+      position:   "relative",
     },
     stepLeft: {
-      display:         "flex",
-      flexDirection:   "column",
-      alignItems:      "center",
-      width:           "14px",
-      flexShrink:      0,
-      paddingTop:      "2px",
+      display:       "flex",
+      flexDirection: "column",
+      alignItems:    "center",
+      width:         "14px",
+      flexShrink:    0,
+      paddingTop:    "2px",
     },
     stepLine: {
       width:           "1px",
@@ -367,20 +404,20 @@ export default function Register() {
       margin:          "6px 0",
     },
     stepContent: {
-      paddingBottom:   "32px",
-      flex:            1,
+      paddingBottom: "32px",
+      flex:          1,
     },
     stepLabel: {
-      fontWeight:      700,
-      fontSize:        "15px",
-      color:           T.text1,
-      letterSpacing:   "-0.02em",
-      marginBottom:    "4px",
+      fontWeight:    700,
+      fontSize:      "15px",
+      color:         T.text1,
+      letterSpacing: "-0.02em",
+      marginBottom:  "4px",
     },
     stepSub: {
-      fontSize:        "12.5px",
-      color:           T.text2,
-      lineHeight:      1.5,
+      fontSize:   "12.5px",
+      color:      T.text2,
+      lineHeight: 1.5,
     },
   };
 
@@ -471,33 +508,30 @@ export default function Register() {
                 <FieldError msg={errors.email} />
               </motion.div>
 
+              {/* Password field with show/hide toggle */}
               <motion.div variants={fieldVariant}>
-                <FLInput
+                <PasswordInput
                   id="password"
                   label="Password"
-                  type="password"
                   value={password}
                   onChange={field(setPassword, "password")}
-                  required
                   autoComplete="new-password"
                 />
                 <StrengthBar />
                 <FieldError msg={errors.password} />
               </motion.div>
-              
+
+              {/* Confirm password field with show/hide toggle */}
               <motion.div variants={fieldVariant}>
-                <FLInput
+                <PasswordInput
                   id="confirm"
                   label="Confirm Password"
-                  type="password"
                   value={confirm}
                   onChange={field(setConfirm, "confirm")}
-                  required
                   autoComplete="new-password"
                 />
                 <FieldError msg={errors.confirm} />
               </motion.div>
-
 
               <motion.div variants={fieldVariant}>
                 <FLSelect
@@ -517,29 +551,9 @@ export default function Register() {
             </motion.div>
 
             <AnimatePresence>
-              {role === "instructor" && (
-                <motion.div
-                  style={S.infoBox}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ ...SPRING }}
-                >
-                  <span style={{ flexShrink: 0, paddingTop: "1px" }}>
-                    <IconInfo />
-                  </span>
-                  <span>
-                    Instructor accounts require institution verification. A team member will
-                    review your request within 24 hours.
-                  </span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <AnimatePresence>
               {apiError && (
                 <motion.div
-                  style={{ ...S.apiErrorBox, marginTop: role === "instructor" ? "16px" : "0" }}
+                  style={S.apiErrorBox}
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}

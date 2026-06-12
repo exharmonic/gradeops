@@ -11,7 +11,6 @@ const PATH_TO_SECTION = {
   "/ta/progress":  "progress",
   "/ta/completed": "completed",
   "/ta/flagged":   "flagged",
-  "/ta/settings":  "settings",
 };
 
 const SECTION_META = {
@@ -19,7 +18,6 @@ const SECTION_META = {
   progress:  { title: "In Progress",   sub: "Scripts you have started reviewing"         },
   completed: { title: "Completed",     sub: "Scripts you have approved or overridden"    },
   flagged:   { title: "Flagged",       sub: "Scripts flagged for senior review"          },
-  settings:  { title: "Settings",      sub: "Configure your account and preferences"     },
 };
 
 // Mock Data
@@ -678,12 +676,6 @@ export default function TADashboard() {
             <div key="flagged" style={{ flex: 1, overflowY: "auto", padding: 28 }}>
               <SectionFlagged items={MOCK_QUEUE} sessionStatuses={sessionStatuses} />
             </div>
-          )}
-
-          {PATH_TO_SECTION[activeRoute] === "settings" && (
-            <motion.div key="settings" {...sectionTransition} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: T.text3, fontSize: 14 }}>
-              Settings coming soon.
-            </motion.div>
           )}
         </AnimatePresence>
       </div>

@@ -27,12 +27,6 @@ const Icons = {
       <polyline points="14 2 14 8 20 8" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="13" y2="17" />
     </svg>
   ),
-  Rubrics: () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
-      <polyline points="3 6 4 7 6 5" /><polyline points="3 12 4 13 6 11" /><polyline points="3 18 4 19 6 17" />
-    </svg>
-  ),
   Grades: () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
       <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" />
@@ -92,12 +86,9 @@ const Icons = {
    NAV DEFINITIONS
  */
 const INSTRUCTOR_NAV = [
-  { label: "Overview",  icon: Icons.Overview,    path: "/instructor"          },
-  { label: "Exams",     icon: Icons.Exams,       path: "/instructor/exams"    },
-  { label: "Rubrics",   icon: Icons.Rubrics,     path: "/instructor/rubrics"  },
-  { label: "Grades",    icon: Icons.Grades,      path: "/instructor/grades"   },
-  { label: "Audit Log", icon: Icons.Audit,       path: "/instructor/audit"    },
-  { label: "Settings",  icon: Icons.Settings,    path: "/instructor/settings" },
+  { label: "Overview", icon: Icons.Overview, path: "/instructor"         },
+  { label: "Exams",    icon: Icons.Exams,    path: "/instructor/exams"   },
+  { label: "Grades",   icon: Icons.Grades,   path: "/instructor/grades"  },
 ];
 
 const TA_NAV = [
@@ -105,7 +96,6 @@ const TA_NAV = [
   { label: "In Progress",  icon: Icons.Spinner,     path: "/ta/progress"  },
   { label: "Completed",    icon: Icons.CheckCircle, path: "/ta/completed" },
   { label: "Flagged",      icon: Icons.Flag,        path: "/ta/flagged"   },
-  { label: "Settings",     icon: Icons.Settings,    path: "/ta/settings"  },
 ];
 
 /* 

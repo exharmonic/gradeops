@@ -2,7 +2,7 @@ import { useState, useContext, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, useSpring, useTransform } from "framer-motion";
 import T, { SPRING, SPRING_LG, EASE_EXPO } from "../tokens";
-import { MagBtn, FLInput, FLSelect, LoadingSpinner, Dot } from "../components/ui";
+import { MagBtn, LoadingSpinner, Dot } from "../components/ui";
 import { UserContext } from "../context/UserContext";
 import Sidebar from "../components/Sidebar";
 import api from "../services/api";
@@ -121,13 +121,6 @@ async function get_exams() {
 
 }
 
-const MOCK_RUBRICS = [
-  { id: 1, title: "CS301 Standard Rubric", questions: 8, modified: "Jun 03, 2026", exams: 3 },
-  { id: 2, title: "Math Proof Evaluator", questions: 5, modified: "May 28, 2026", exams: 2 },
-  { id: 3, title: "Physics Short Answer", questions: 12, modified: "Jun 01, 2026", exams: 1 },
-  { id: 4, title: "Essay & Argument Rubric", questions: 6, modified: "May 22, 2026", exams: 4 },
-];
-
 const MOCK_GRADES = [
   { id: "STU-0041", exam: "CS301 – Midterm", score: 87, max: 100, released: true },
   { id: "STU-0082", exam: "CS301 – Midterm", score: 54, max: 100, released: true },
@@ -137,17 +130,6 @@ const MOCK_GRADES = [
   { id: "STU-0198", exam: "CS401 – Algo Quiz 3", score: 95, max: 100, released: true },
   { id: "STU-0203", exam: "CS401 – Algo Quiz 3", score: 62, max: 100, released: false },
   { id: "STU-0211", exam: "MATH201 – Lin. Alg.", score: 38, max: 100, released: false },
-];
-
-const MOCK_AUDIT = [
-  { id: 1, ts: "2026-06-07 22:41", actor: "dr.adeyemi@uni.edu", type: "RELEASED", desc: "Released grades for CS301 – Midterm Exam (182 scripts)" },
-  { id: 2, ts: "2026-06-07 19:08", actor: "ta.priya@uni.edu", type: "OVERRIDDEN", desc: "Overrode AI score for STU-0082 Q4 — from 6/10 to 8/10" },
-  { id: 3, ts: "2026-06-07 17:22", actor: "ta.raj@uni.edu", type: "FLAGGED", desc: "Flagged STU-0113 Q2 for plagiarism similarity 94%" },
-  { id: 4, ts: "2026-06-06 14:55", actor: "dr.adeyemi@uni.edu", type: "UPLOADED", desc: "Uploaded PHY101 – Mechanics Final (96 scripts)" },
-  { id: 5, ts: "2026-06-06 11:30", actor: "system", type: "GRADED", desc: "AI grading completed MATH201 – Linear Algebra batch 2/3" },
-  { id: 6, ts: "2026-06-05 09:10", actor: "dr.adeyemi@uni.edu", type: "UPLOADED", desc: "Uploaded MATH201 – Linear Algebra (210 scripts)" },
-  { id: 7, ts: "2026-06-04 16:44", actor: "ta.priya@uni.edu", type: "OVERRIDDEN", desc: "Overrode AI score for STU-0041 Q7 — from 9/10 to 10/10" },
-  { id: 8, ts: "2026-06-04 08:00", actor: "system", type: "GRADED", desc: "AI grading completed CS301 – Midterm Exam (182 scripts)" },
 ];
 
 const RUBRIC_PLACEHOLDER = `{
@@ -170,6 +152,15 @@ const RUBRIC_PLACEHOLDER = `{
   ]
 }`;
 
+const RUBRIC_PLACEHOLDER_RAW = RUBRIC_PLACEHOLDER;
+
+const MOCK_EXAMS = [
+  { id: 1, title: "CS301 – Midterm Exam",         uploaded: "Jun 07, 2026", scripts: 182, graded: 182, status: "Completed",  rubric: JSON.parse(RUBRIC_PLACEHOLDER_RAW) },
+  { id: 2, title: "MATH201 – Linear Algebra",      uploaded: "Jun 06, 2026", scripts: 210, graded: 140, status: "In Review",  rubric: JSON.parse(RUBRIC_PLACEHOLDER_RAW) },
+  { id: 3, title: "PHY101 – Mechanics Final",      uploaded: "Jun 06, 2026", scripts: 96,  graded: 60,  status: "Processing", rubric: JSON.parse(RUBRIC_PLACEHOLDER_RAW) },
+  { id: 4, title: "CS401 – Algorithms Quiz 3",     uploaded: "Jun 05, 2026", scripts: 74,  graded: 74,  status: "Completed",  rubric: JSON.parse(RUBRIC_PLACEHOLDER_RAW) },
+];
+
 /* 
    SMALL SHARED COMPONENTS
  */
@@ -189,26 +180,6 @@ const StatusBadge = ({ status }) => {
       whiteSpace: "nowrap",
     }}>
       {status.toUpperCase()}
-    </span>
-  );
-};
-
-const AuditBadge = ({ type }) => {
-  const map = {
-    GRADED: { color: T.cyan, bg: T.cyanDim },
-    OVERRIDDEN: { color: "#f59e0b", bg: "rgba(245,158,11,0.10)" },
-    FLAGGED: { color: T.red, bg: "rgba(248,113,113,0.10)" },
-    RELEASED: { color: T.emerald, bg: T.emeraldDim },
-    UPLOADED: { color: T.text2, bg: "rgba(136,150,164,0.10)" },
-  };
-  const s = map[type] || map["UPLOADED"];
-  return (
-    <span style={{
-      fontSize: "10px", fontWeight: 700, fontFamily: "Geist Mono, monospace",
-      letterSpacing: "0.09em", color: s.color, backgroundColor: s.bg,
-      borderRadius: "4px", padding: "2px 7px", whiteSpace: "nowrap", flexShrink: 0,
-    }}>
-      {type}
     </span>
   );
 };
@@ -323,9 +294,7 @@ function SectionOverview({ exams }) {
                   <td style={{ padding: "14px 20px", fontSize: "13px", color: T.text2, fontFamily: "Geist Mono, monospace" }}>{exam.graded}</td>
                   <td style={{ padding: "14px 20px" }}><StatusBadge status={exam.status} /></td>
                   <td style={{ padding: "14px 20px" }}>
-                    <MagBtn variant="ghost" size="md">
-                      <Ico.Eye />&nbsp;View
-                    </MagBtn>
+                    <span style={{ fontSize: "12px", color: T.text3, fontFamily: "Geist Mono, monospace" }}>—</span>
                   </td>
                 </motion.tr>
               ))}
@@ -347,6 +316,17 @@ function SectionExams({ exams, onUploadSuccess }) {
   const [jsonValid, setJsonValid] = useState(null); // null | true | false
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef();
+
+  // View-exam panel state
+  const [viewingExam, setViewingExam] = useState(null); // exam object or null
+  const [moreFilesRef] = useState(() => ({ current: null }));
+  const moreFileInputRef = useRef();
+  const [moreFiles, setMoreFiles] = useState([]);
+  const [editingRubric, setEditingRubric] = useState(false);
+  const [editRubricJson, setEditRubricJson] = useState("");
+  const [editRubricValid, setEditRubricValid] = useState(null);
+  const [confirmRemove, setConfirmRemove] = useState(false);
+  const [removingExam, setRemovingExam] = useState(false);
 
   const addFiles = (incoming) => {
     const arr = Array.from(incoming).filter(f => f.type === "application/pdf");
@@ -420,6 +400,294 @@ function SectionExams({ exams, onUploadSuccess }) {
     }
   };
 
+  // ── VIEW EXAM handlers ──
+  const openViewExam = (exam) => {
+    setViewingExam(exam);
+    setMoreFiles([]);
+    setEditingRubric(false);
+    setEditRubricJson(exam.rubric ? JSON.stringify(exam.rubric, null, 2) : RUBRIC_PLACEHOLDER);
+    setEditRubricValid(null);
+    setConfirmRemove(false);
+  };
+
+  const closeViewExam = () => {
+    setViewingExam(null);
+    setMoreFiles([]);
+    setEditingRubric(false);
+    setConfirmRemove(false);
+  };
+
+  const addMoreFiles = (incoming) => {
+    const arr = Array.from(incoming).filter(f => f.type === "application/pdf");
+    setMoreFiles(prev => [...prev, ...arr.map(f => ({ file: f, name: f.name, size: f.size, progress: 0, id: Math.random() }))]);
+    arr.forEach((_, i) => {
+      let p = 0;
+      const iv = setInterval(() => {
+        p += Math.random() * 18 + 4;
+        if (p >= 100) { p = 100; clearInterval(iv); }
+        setMoreFiles(prev => prev.map((x, xi) => xi === prev.length - arr.length + i ? { ...x, progress: Math.floor(p) } : x));
+      }, 120);
+    });
+  };
+
+  const handleUploadMore = async () => {
+    if (moreFiles.length === 0) {
+      alert("Please select PDF files to add.");
+      return;
+    }
+    try {
+      const formData = new FormData();
+      moreFiles.forEach((f) => formData.append("files", f.file));
+      formData.append("exam_id", viewingExam.id);
+      await api.post('/upload/', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setMoreFiles([]);
+      if (onUploadSuccess) onUploadSuccess();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Failed to upload additional files.");
+    }
+  };
+
+  const handleSaveRubric = async () => {
+    let parsed;
+    try {
+      parsed = JSON.parse(editRubricJson);
+      setEditRubricValid(true);
+    } catch {
+      setEditRubricValid(false);
+      alert("Your rubric JSON is invalid. Please fix syntax errors.");
+      return;
+    }
+    try {
+      await api.patch(`/exams/${viewingExam.id}/`, { rubric: parsed });
+      setEditingRubric(false);
+      if (onUploadSuccess) onUploadSuccess();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Failed to save rubric.");
+    }
+  };
+
+  const handleRemoveExam = async () => {
+    setRemovingExam(true);
+    try {
+      await api.delete(`/exams/${viewingExam.id}/`);
+      closeViewExam();
+      if (onUploadSuccess) onUploadSuccess();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Failed to remove exam.");
+    } finally {
+      setRemovingExam(false);
+    }
+  };
+
+  // ── If viewing an exam, show the exam detail panel ──
+  if (viewingExam) {
+    const pct = viewingExam.scripts > 0 ? Math.round((viewingExam.graded / viewingExam.scripts) * 100) : 0;
+    return (
+      <motion.div key="exam-view" {...sectionTransition}>
+        {/* Back button + header */}
+        <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
+          <motion.button
+            onClick={closeViewExam}
+            whileHover={{ backgroundColor: T.surfaceHigh }}
+            whileTap={{ scale: 0.97 }}
+            style={{ display: "flex", alignItems: "center", gap: "6px", background: "none", border: `1px solid ${T.border}`, borderRadius: "8px", padding: "7px 14px", cursor: "pointer", color: T.text2, fontSize: "13px", fontFamily: "Geist, sans-serif" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            Back to Exams
+          </motion.button>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: "17px", color: T.text1, letterSpacing: "-0.02em" }}>{viewingExam.title}</div>
+            <div style={{ fontSize: "11px", color: T.text3, fontFamily: "Geist Mono, monospace", marginTop: "2px" }}>
+              Uploaded {viewingExam.uploaded}
+            </div>
+          </div>
+          <div style={{ marginLeft: "auto" }}>
+            <StatusBadge status={viewingExam.status} />
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "24px", alignItems: "start" }}>
+
+          {/* LEFT COLUMN */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+
+            {/* Stats row */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px" }}>
+              {[
+                { label: "Scripts Uploaded", value: viewingExam.scripts, color: T.text1 },
+                { label: "Graded",           value: viewingExam.graded,  color: T.cyan  },
+                { label: "Grading %",        value: `${pct}%`,           color: pct >= 85 ? T.emerald : pct >= 50 ? "#f59e0b" : T.red, mono: true },
+              ].map(({ label, value, color, mono }) => (
+                <div key={label} style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "12px", padding: "18px 20px" }}>
+                  <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: T.text3, fontFamily: "Geist Mono, monospace", marginBottom: "8px" }}>{label}</div>
+                  <div style={{ fontSize: "28px", fontWeight: 700, color, fontFamily: mono ? "Geist Mono, monospace" : "Geist, sans-serif", letterSpacing: "-0.02em", lineHeight: 1 }}>{value}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Progress bar */}
+            <div style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "12px", padding: "20px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <span style={{ fontSize: "13px", fontWeight: 600, color: T.text1 }}>Grading Progress</span>
+                <span style={{ fontFamily: "Geist Mono, monospace", fontSize: "12px", color: T.text3 }}>{viewingExam.graded} / {viewingExam.scripts}</span>
+              </div>
+              <ProgressBar pct={pct} color={pct >= 85 ? T.emerald : T.cyan} />
+            </div>
+
+            {/* Upload more files */}
+            <div style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "20px" }}>
+              <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.1em", color: T.text3, fontFamily: "Geist Mono, monospace", marginBottom: "14px" }}>UPLOAD MORE SCRIPTS</div>
+              <motion.div
+                onDragOver={(e) => { e.preventDefault(); }}
+                onDrop={(e) => { e.preventDefault(); addMoreFiles(e.dataTransfer.files); }}
+                onClick={() => moreFileInputRef.current?.click()}
+                whileHover={{ borderColor: T.cyan }}
+                style={{ border: `2px dashed ${T.border}`, borderRadius: "12px", padding: "28px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "8px", cursor: "pointer", transition: "border-color 0.2s" }}
+              >
+                <input ref={moreFileInputRef} type="file" accept=".pdf" multiple style={{ display: "none" }} onChange={(e) => addMoreFiles(e.target.files)} />
+                <Ico.Upload />
+                <div style={{ fontSize: "13px", color: T.text2, fontWeight: 500 }}>Drop PDFs to add more scripts</div>
+                <div style={{ fontSize: "11px", color: T.text3 }}>or <span style={{ color: T.cyan }}>browse</span> to select</div>
+              </motion.div>
+
+              {/* more files list */}
+              <AnimatePresence>
+                {moreFiles.map((f) => (
+                  <motion.div key={f.id} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                    style={{ backgroundColor: T.surfaceHigh, border: `1px solid ${T.border}`, borderRadius: "8px", padding: "12px 14px", marginTop: "10px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <div>
+                        <div style={{ fontSize: "12.5px", color: T.text1, fontWeight: 500 }}>{f.name}</div>
+                        <div style={{ fontSize: "10.5px", color: T.text3, fontFamily: "Geist Mono, monospace" }}>{(f.size / 1024).toFixed(1)} KB</div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <span style={{ fontSize: "11px", fontFamily: "Geist Mono, monospace", color: f.progress === 100 ? T.emerald : T.cyan }}>{f.progress}%</span>
+                        <motion.button onClick={() => setMoreFiles(p => p.filter(x => x.id !== f.id))}
+                          whileHover={{ color: T.red }} whileTap={{ scale: 0.9 }}
+                          style={{ background: "none", border: "none", cursor: "pointer", color: T.text3, display: "flex" }}>
+                          <Ico.X />
+                        </motion.button>
+                      </div>
+                    </div>
+                    <ProgressBar pct={f.progress} color={f.progress === 100 ? T.emerald : T.cyan} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+
+              {moreFiles.length > 0 && (
+                <div style={{ marginTop: "14px" }}>
+                  <MagBtn variant="primary" size="md" onClick={handleUploadMore} style={{ width: "100%", justifyContent: "center" }}>
+                    Add {moreFiles.length} file{moreFiles.length > 1 ? "s" : ""} to this exam
+                  </MagBtn>
+                </div>
+              )}
+            </div>
+
+            {/* Change Rubric */}
+            <div style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "20px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+                <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.1em", color: T.text3, fontFamily: "Geist Mono, monospace" }}>RUBRIC</div>
+                <MagBtn variant="ghost" size="md" onClick={() => { setEditingRubric(v => !v); setEditRubricValid(null); }}>
+                  {editingRubric ? "Cancel" : <><Ico.Edit />&nbsp;Change Rubric</>}
+                </MagBtn>
+              </div>
+
+              <AnimatePresence>
+                {!editingRubric ? (
+                  <motion.div key="rubric-preview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <div style={{ backgroundColor: T.surfaceHigh, border: `1px solid ${T.border}`, borderRadius: "8px", padding: "14px", fontFamily: "Geist Mono, monospace", fontSize: "11.5px", color: T.text2, lineHeight: 1.7, maxHeight: "160px", overflowY: "auto", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                      {viewingExam.rubric ? JSON.stringify(viewingExam.rubric, null, 2) : "No rubric attached to this exam."}
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div key="rubric-editor" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ ...SPRING_LG }} style={{ overflow: "hidden" }}>
+                    <textarea
+                      value={editRubricJson}
+                      onChange={(e) => { setEditRubricJson(e.target.value); setEditRubricValid(null); }}
+                      style={{ width: "100%", minHeight: "220px", resize: "vertical", backgroundColor: T.surfaceHigh, border: `1px solid ${T.border}`, borderRadius: "8px", padding: "14px", color: T.text1, fontFamily: "Geist Mono, monospace", fontSize: "12px", lineHeight: 1.7, outline: "none", boxSizing: "border-box", transition: "border-color 0.2s" }}
+                      onFocus={(e) => e.target.style.borderColor = T.cyan}
+                      onBlur={(e) => e.target.style.borderColor = T.border}
+                    />
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "10px" }}>
+                      <MagBtn variant="primary" size="md" onClick={handleSaveRubric}>Save Rubric</MagBtn>
+                      <AnimatePresence mode="wait">
+                        {editRubricValid === true && (
+                          <motion.span key="ok" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            style={{ fontSize: "12px", color: T.emerald, display: "flex", alignItems: "center", gap: "5px" }}>
+                            <Ico.Check />&nbsp;Valid JSON
+                          </motion.span>
+                        )}
+                        {editRubricValid === false && (
+                          <motion.span key="err" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            style={{ fontSize: "12px", color: T.red }}>
+                            Parse error — check syntax
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+          </div>
+
+          {/* RIGHT COLUMN */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
+            {/* Exam info card */}
+            <div style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "20px" }}>
+              <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.1em", color: T.text3, fontFamily: "Geist Mono, monospace", marginBottom: "14px" }}>EXAM INFO</div>
+              {[
+                { label: "Title",        value: viewingExam.title    },
+                { label: "Upload Date",  value: viewingExam.uploaded },
+                { label: "Total Scripts",value: viewingExam.scripts  },
+                { label: "Status",       value: <StatusBadge status={viewingExam.status} /> },
+              ].map(({ label, value }) => (
+                <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${T.border}` }}>
+                  <span style={{ fontSize: "12px", color: T.text3 }}>{label}</span>
+                  <span style={{ fontSize: "12.5px", color: T.text1, fontWeight: 500, fontFamily: typeof value === "string" && /^\d/.test(value) ? "Geist Mono, monospace" : "Geist, sans-serif" }}>{value}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Remove exam */}
+            <div style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "20px" }}>
+              <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.1em", color: T.text3, fontFamily: "Geist Mono, monospace", marginBottom: "14px" }}>DANGER ZONE</div>
+              <AnimatePresence mode="wait">
+                {!confirmRemove ? (
+                  <motion.div key="remove-btn" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <div style={{ fontSize: "12px", color: T.text3, marginBottom: "12px", lineHeight: 1.5 }}>Permanently remove this exam and all associated scripts and grades. This cannot be undone.</div>
+                    <MagBtn variant="danger" size="md" onClick={() => setConfirmRemove(true)} style={{ width: "100%", justifyContent: "center" }}>
+                      Remove Exam
+                    </MagBtn>
+                  </motion.div>
+                ) : (
+                  <motion.div key="remove-confirm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <div style={{ fontSize: "13px", fontWeight: 600, color: T.red, marginBottom: "8px" }}>Are you sure?</div>
+                    <div style={{ fontSize: "12px", color: T.text3, marginBottom: "14px", lineHeight: 1.5 }}>
+                      This will permanently delete <strong style={{ color: T.text1 }}>{viewingExam.title}</strong> and all {viewingExam.scripts} scripts.
+                    </div>
+                    <div style={{ display: "flex", gap: "10px" }}>
+                      <MagBtn variant="danger" size="md" onClick={handleRemoveExam} style={{ flex: 1, justifyContent: "center" }}>
+                        {removingExam ? <><LoadingSpinner />&nbsp;Removing…</> : "Yes, Remove"}
+                      </MagBtn>
+                      <MagBtn variant="ghost" size="md" onClick={() => setConfirmRemove(false)}>Cancel</MagBtn>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // ── Default: upload new exam layout ──
   return (
     <motion.div key="exams" {...sectionTransition}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: "24px", alignItems: "start" }}>
@@ -518,7 +786,10 @@ function SectionExams({ exams, onUploadSuccess }) {
 
         {/* RIGHT — uploaded exam list */}
         <div style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "14px", overflow: "hidden" }}>
-          <div style={{ padding: "16px 20px", borderBottom: `1px solid ${T.border}`, fontSize: "13px", fontWeight: 600, color: T.text1 }}>Uploaded Batches</div>
+          <div style={{ padding: "16px 20px", borderBottom: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: "13px", fontWeight: 600, color: T.text1 }}>Uploaded Batches</span>
+            <span style={{ fontFamily: "Geist Mono, monospace", fontSize: "11px", color: T.text3 }}>{exams.length} total</span>
+          </div>
           <motion.div variants={rowStagger} initial="hidden" animate="visible" style={{ padding: "12px" }}>
             {exams.map((exam) => {
               const pct = exam.scripts > 0 ? Math.round((exam.graded / exam.scripts) * 100) : 0;
@@ -532,88 +803,24 @@ function SectionExams({ exams, onUploadSuccess }) {
                     </div>
                     <StatusBadge status={exam.status} />
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
                     <div style={{ flex: 1 }}><ProgressBar pct={pct} /></div>
                     <span style={{ fontSize: "11px", fontFamily: "Geist Mono, monospace", color: T.text3, flexShrink: 0 }}>{pct}%</span>
                   </div>
-                  <div style={{ display: "flex", gap: "6px", marginTop: "10px" }}>
-                    <MagBtn variant="ghost" size="md"><Ico.Eye />&nbsp;View</MagBtn>
-                  </div>
+                  <MagBtn variant="ghost" size="md" onClick={() => openViewExam(exam)} style={{ width: "100%", justifyContent: "center" }}>
+                    <Ico.Eye />&nbsp;View Exam
+                  </MagBtn>
                 </motion.div>
               );
             })}
+            {exams.length === 0 && (
+              <div style={{ padding: "24px", textAlign: "center", fontSize: "13px", color: T.text3 }}>
+                No exams uploaded yet
+              </div>
+            )}
           </motion.div>
         </div>
       </div>
-    </motion.div>
-  );
-}
-
-/* 
-   SECTION 3 — RUBRICS
- */
-function SectionRubrics() {
-  const [showNew, setShowNew] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newDesc, setNewDesc] = useState("");
-  const [newJson, setNewJson] = useState(RUBRIC_PLACEHOLDER);
-
-  return (
-    <motion.div key="rubrics" {...sectionTransition}>
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
-        <MagBtn variant="primary" size="md" onClick={() => setShowNew(p => !p)}>
-          <Ico.Plus />&nbsp;&nbsp;New Rubric
-        </MagBtn>
-      </div>
-
-      {/* new rubric inline panel */}
-      <AnimatePresence>
-        {showNew && (
-          <motion.div
-            key="new-rubric"
-            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
-            transition={{ ...SPRING_LG }}
-            style={{ overflow: "hidden", marginBottom: "24px" }}
-          >
-            <div style={{ backgroundColor: T.surface, border: `1px solid ${T.cyan}`, borderRadius: "14px", padding: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
-              <div style={{ fontSize: "13px", fontWeight: 700, color: T.cyan, letterSpacing: "0.04em", fontFamily: "Geist Mono, monospace" }}>NEW RUBRIC</div>
-              <FLInput id="rname" label="Rubric Name" value={newName} onChange={(e) => setNewName(e.target.value)} />
-              <FLInput id="rdesc" label="Description" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} />
-              <textarea
-                value={newJson} onChange={(e) => setNewJson(e.target.value)}
-                style={{ width: "100%", minHeight: "180px", resize: "vertical", backgroundColor: T.surfaceHigh, border: `1px solid ${T.border}`, borderRadius: "8px", padding: "14px", color: T.text1, fontFamily: "Geist Mono, monospace", fontSize: "12px", lineHeight: 1.7, outline: "none", boxSizing: "border-box" }}
-                onFocus={(e) => e.target.style.borderColor = T.cyan}
-                onBlur={(e) => e.target.style.borderColor = T.border}
-              />
-              <div style={{ display: "flex", gap: "10px" }}>
-                <MagBtn variant="primary" size="md">Save Rubric</MagBtn>
-                <MagBtn variant="ghost" size="md" onClick={() => setShowNew(false)}>Cancel</MagBtn>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* rubric cards grid */}
-      <motion.div variants={rowStagger} initial="hidden" animate="visible"
-        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px" }}>
-        {MOCK_RUBRICS.map((r) => (
-          <motion.div key={r.id} variants={rowItem}
-            whileHover={{ borderColor: T.borderMid, scale: 1.01 }}
-            style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "20px", transition: "border-color 0.15s", cursor: "default" }}>
-            <div style={{ fontWeight: 700, fontSize: "14px", color: T.text1, marginBottom: "6px", letterSpacing: "-0.01em" }}>{r.title}</div>
-            <div style={{ display: "flex", gap: "16px", marginBottom: "16px" }}>
-              <span style={{ fontSize: "11px", color: T.text3, fontFamily: "Geist Mono, monospace" }}>{r.questions} questions</span>
-              <span style={{ fontSize: "11px", color: T.text3, fontFamily: "Geist Mono, monospace" }}>{r.exams} exams</span>
-            </div>
-            <div style={{ fontSize: "11px", color: T.text3, marginBottom: "14px" }}>Modified {r.modified}</div>
-            <div style={{ display: "flex", gap: "8px" }}>
-              <MagBtn variant="ghost" size="md"><Ico.Edit />&nbsp;Edit</MagBtn>
-              <MagBtn variant="ghost" size="md"><Ico.Copy />&nbsp;Duplicate</MagBtn>
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
     </motion.div>
   );
 }
@@ -623,28 +830,17 @@ function SectionRubrics() {
  */
 function SectionGrades() {
   const [search, setSearch] = useState("");
-  const [releasing, setReleasing] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [released, setReleased] = useState(false);
 
   const filtered = MOCK_GRADES.filter(g =>
     g.id.toLowerCase().includes(search.toLowerCase()) ||
     g.exam.toLowerCase().includes(search.toLowerCase())
   );
 
-  const doRelease = async () => {
-    setReleasing(true);
-    await new Promise(r => setTimeout(r, 1500));
-    setReleasing(false);
-    setReleased(true);
-    setShowConfirm(false);
-  };
-
   return (
     <motion.div key="grades" {...sectionTransition}>
-      {/* filter bar */}
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px", flexWrap: "wrap" }}>
-        <div style={{ position: "relative", flex: "1 1 220px" }}>
+      {/* search bar */}
+      <div style={{ marginBottom: "20px" }}>
+        <div style={{ position: "relative", maxWidth: "400px" }}>
           <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: T.text3, pointerEvents: "none" }}><Ico.Search /></span>
           <input
             placeholder="Search student ID or exam…"
@@ -654,36 +850,7 @@ function SectionGrades() {
             onBlur={(e) => e.target.style.borderColor = T.border}
           />
         </div>
-        <div style={{ marginLeft: "auto" }}>
-          <MagBtn variant="primary" size="md" onClick={() => setShowConfirm(p => !p)}>
-            <Ico.Release />&nbsp;&nbsp;Release Grades
-          </MagBtn>
-        </div>
       </div>
-
-      {/* release confirmation */}
-      <AnimatePresence>
-        {showConfirm && (
-          <motion.div
-            key="confirm"
-            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
-            transition={{ ...SPRING_LG }} style={{ overflow: "hidden", marginBottom: "20px" }}
-          >
-            <div style={{ backgroundColor: T.emeraldDim, border: `1px solid ${T.emeraldGlow}`, borderRadius: "12px", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
-              <div>
-                <div style={{ fontSize: "13.5px", fontWeight: 600, color: T.emerald, marginBottom: "2px" }}>Release grades to students?</div>
-                <div style={{ fontSize: "12px", color: T.text2 }}>This will publish all completed grades. This action cannot be undone.</div>
-              </div>
-              <div style={{ display: "flex", gap: "10px" }}>
-                <MagBtn variant="primary" size="md" onClick={doRelease}>
-                  {releasing ? <><LoadingSpinner />&nbsp;Releasing…</> : "Confirm Release"}
-                </MagBtn>
-                <MagBtn variant="ghost" size="md" onClick={() => setShowConfirm(false)}>Cancel</MagBtn>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* grades table */}
       <div style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "14px", overflow: "hidden" }}>
@@ -691,7 +858,7 @@ function SectionGrades() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>
-                {["Student ID", "Exam", "Score", "Max", "Percentage", "Status", "Released"].map(h => (
+                {["Student ID", "Exam", "Score", "Max", "Percentage", "Status"].map(h => (
                   <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: "11px", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: T.text3, fontFamily: "Geist Mono, monospace", borderBottom: `1px solid ${T.border}`, whiteSpace: "nowrap" }}>{h}</th>
                 ))}
               </tr>
@@ -713,11 +880,6 @@ function SectionGrades() {
                     <td style={{ padding: "13px 20px" }}>
                       <StatusBadge status={pct >= 50 ? "Completed" : "Processing"} />
                     </td>
-                    <td style={{ padding: "13px 20px" }}>
-                      {(g.released || released)
-                        ? <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "12px", color: T.emerald }}><Ico.Check /> Released</span>
-                        : <span style={{ fontSize: "12px", color: T.text3 }}>Pending</span>}
-                    </td>
                   </motion.tr>
                 );
               })}
@@ -730,78 +892,18 @@ function SectionGrades() {
 }
 
 /* 
-   SECTION 5 — AUDIT LOG
- */
-function SectionAudit() {
-  const [typeFilter, setTypeFilter] = useState("ALL");
-  const types = ["ALL", "GRADED", "OVERRIDDEN", "FLAGGED", "RELEASED", "UPLOADED"];
-  const filtered = typeFilter === "ALL" ? MOCK_AUDIT : MOCK_AUDIT.filter(e => e.type === typeFilter);
-
-  return (
-    <motion.div key="audit" {...sectionTransition}>
-      {/* filter bar */}
-      <div style={{ display: "flex", gap: "8px", marginBottom: "24px", flexWrap: "wrap" }}>
-        {types.map((t) => (
-          <motion.button key={t} onClick={() => setTypeFilter(t)}
-            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-            style={{
-              padding: "6px 14px", borderRadius: "6px", border: `1px solid ${typeFilter === t ? T.cyan : T.border}`,
-              backgroundColor: typeFilter === t ? T.cyanDim : "transparent",
-              color: typeFilter === t ? T.cyan : T.text3,
-              fontSize: "11px", fontWeight: 600, fontFamily: "Geist Mono, monospace",
-              letterSpacing: "0.07em", cursor: "pointer", transition: "all 0.15s",
-            }}>
-            {t}
-          </motion.button>
-        ))}
-      </div>
-
-      {/* timeline */}
-      <motion.div variants={rowStagger} initial="hidden" animate="visible" style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-        {filtered.map((ev, i) => (
-          <motion.div key={ev.id} variants={rowItem}
-            whileHover={{ backgroundColor: T.surfaceHigh }}
-            style={{ display: "flex", alignItems: "flex-start", gap: "16px", padding: "16px", borderRadius: "10px", transition: "background-color 0.15s" }}>
-            {/* timeline line */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
-              <Dot color={ev.type === "FLAGGED" ? T.red : ev.type === "RELEASED" ? T.emerald : T.cyan} />
-              {i < filtered.length - 1 && <div style={{ width: "1px", height: "100%", minHeight: "24px", backgroundColor: T.border, marginTop: "6px" }} />}
-            </div>
-            {/* content */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px", flexWrap: "wrap" }}>
-                <AuditBadge type={ev.type} />
-                <span style={{ fontFamily: "Geist Mono, monospace", fontSize: "11px", color: T.text3 }}>{ev.ts}</span>
-                <span style={{ fontSize: "12px", color: T.cyan }}>{ev.actor}</span>
-              </div>
-              <div style={{ fontSize: "13.5px", color: T.text2, lineHeight: 1.5 }}>{ev.desc}</div>
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
-    </motion.div>
-  );
-}
-
-/* 
    SECTION TITLES
  */
 const SECTION_META = {
   overview: { title: "Overview", sub: "Your grading workspace at a glance" },
-  exams: { title: "Exams", sub: "Upload and manage exam batches" },
-  rubrics: { title: "Rubrics", sub: "Define and manage grading rubrics" },
-  grades: { title: "Grades", sub: "Review scores and release to students" },
-  audit: { title: "Audit Log", sub: "Full activity trail for this workspace" },
-  settings: { title: "Settings", sub: "Configure your account and preferences" },
+  exams:    { title: "Exams",    sub: "Upload and manage exam batches"      },
+  grades:   { title: "Grades",   sub: "Review scores and release to students" },
 };
 
 const PATH_TO_SECTION = {
-  "/instructor": "overview",
-  "/instructor/exams": "exams",
-  "/instructor/rubrics": "rubrics",
-  "/instructor/grades": "grades",
-  "/instructor/audit": "audit",
-  "/instructor/settings": "settings",
+  "/instructor":         "overview",
+  "/instructor/exams":   "exams",
+  "/instructor/grades":  "grades",
 };
 
 /* 
@@ -832,10 +934,11 @@ export default function InstructorDashboard() {
     try {
       setLoadingExams(true);
       const response = await api.get('/exams/');
-      setExams(response.data);
+      const data = response.data;
+      setExams(data && data.length > 0 ? data : MOCK_EXAMS);
     } catch (err) {
       console.error("Failed to fetch exams", err);
-      setExams([]);
+      setExams(MOCK_EXAMS);
     } finally {
       setLoadingExams(false);
     }
@@ -878,15 +981,7 @@ export default function InstructorDashboard() {
           <AnimatePresence mode="wait">
             {section === "overview" && <SectionOverview key="overview" exams={exams} />}
             {section === "exams" && <SectionExams key="exams" exams={exams} onUploadSuccess={fetchExams} />}
-            {section === "rubrics" && <SectionRubrics key="rubrics" />}
             {section === "grades" && <SectionGrades key="grades" />}
-            {section === "audit" && <SectionAudit key="audit" />}
-            {section === "settings" && (
-              <motion.div key="settings" {...sectionTransition}
-                style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "400px", color: T.text3, fontSize: "14px" }}>
-                Settings coming soon.
-              </motion.div>
-            )}
           </AnimatePresence>
         </div>
       </div>

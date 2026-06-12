@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, Suspense, useMemo } from "react";
+import { useRef, useState, useEffect, Suspense, useMemo, useCallback } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Points, PointMaterial } from "@react-three/drei";
 import {
@@ -445,6 +445,128 @@ function Features() {
   );
 }
 
+// ─── Eye icon SVG (show/hide password toggle) ────────────────────────────────
+function EyeIcon({ open }) {
+  return open ? (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  ) : (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
+      <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  );
+}
+
+// ─── Password input with show/hide toggle ────────────────────────────────────
+function PasswordInput({ id, label, value, onChange, autoComplete }) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div style={{ position: "relative" }}>
+      <FLInput
+        id={id}
+        label={label}
+        type={visible ? "text" : "password"}
+        value={value}
+        onChange={onChange}
+        required
+        autoComplete={autoComplete}
+        style={{ paddingRight: 40 }}
+      />
+      <button
+        type="button"
+        onClick={() => setVisible(v => !v)}
+        aria-label={visible ? "Hide password" : "Show password"}
+        style={{
+          position: "absolute",
+          right: 12,
+          top: "50%",
+          transform: "translateY(-50%)",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          color: T.text3,
+          display: "flex",
+          alignItems: "center",
+          padding: 4,
+          borderRadius: 4,
+          transition: "color 0.15s",
+          lineHeight: 0,
+        }}
+        onMouseEnter={e => e.currentTarget.style.color = T.cyan}
+        onMouseLeave={e => e.currentTarget.style.color = T.text3}
+      >
+        <EyeIcon open={visible} />
+      </button>
+    </div>
+  );
+}
+
+// ─── Password strength meter (register only) ─────────────────────────────────
+function getPasswordStrength(pw) {
+  if (!pw) return { score: 0, label: "", color: "transparent" };
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+  if (score <= 1) return { score: 1, label: "Weak", color: T.red || "#f87171" };
+  if (score === 2) return { score: 2, label: "Fair", color: "#fbbf24" };
+  if (score === 3) return { score: 3, label: "Good", color: T.cyan };
+  return { score: 4, label: "Strong", color: T.emerald };
+}
+
+function PasswordStrengthMeter({ password }) {
+  const { score, label, color } = getPasswordStrength(password);
+  if (!password) return null;
+
+  const segments = 4;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      style={{ marginTop: -4 }}
+    >
+      {/* Segmented bar */}
+      <div style={{ display: "flex", gap: 4 }}>
+        {Array.from({ length: segments }).map((_, i) => (
+          <motion.div
+            key={i}
+            animate={{ background: i < score ? color : "rgba(255,255,255,0.06)" }}
+            transition={{ duration: 0.3, delay: i * 0.04 }}
+            style={{ flex: 1, height: 3, borderRadius: 2 }}
+          />
+        ))}
+      </div>
+      {/* Label row */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
+        <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 10, color: T.text3, letterSpacing: "0.05em" }}>
+          Password strength
+        </span>
+        <motion.span
+          key={label}
+          initial={{ opacity: 0, x: 6 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.18 }}
+          style={{ fontFamily: "Geist Mono, monospace", fontSize: 10, color, letterSpacing: "0.06em", fontWeight: 600 }}
+        >
+          {label}
+        </motion.span>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 const SLIDE = {
   initial: d => ({ opacity: 0, x: d * 28, scale: 0.98 }),
   animate: { opacity: 1, x: 0, scale: 1, transition: { ...SPRING } },
@@ -550,12 +672,19 @@ function AuthSection({ id }) {
               ))}
             </div>
 
-            <div style={{ minHeight: mode === "login" ? 240 : 380, position: "relative" }}>
+            <div style={{ minHeight: mode === "login" ? 240 : 420, position: "relative" }}>
               <AnimatePresence mode="wait" custom={dir}>
                 {mode === "login" && (
                   <motion.form key="login" custom={dir} variants={SLIDE} initial="initial" animate="animate" exit="exit" onSubmit={doLogin} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     <FLInput id="l-em" label="Email address" type="email" value={lem} onChange={e => setLem(e.target.value)} required autoComplete="email" />
-                    <FLInput id="l-pw" label="Password" type="password" value={lpw} onChange={e => setLpw(e.target.value)} required autoComplete="current-password" />
+                    {/* Password field with show/hide toggle */}
+                    <PasswordInput
+                      id="l-pw"
+                      label="Password"
+                      value={lpw}
+                      onChange={e => setLpw(e.target.value)}
+                      autoComplete="current-password"
+                    />
                     <motion.button type="submit" disabled={lLoading || lOk} whileTap={{ scale: 0.97 }}
                       style={{ marginTop: 8, height: 50, borderRadius: 10, border: "none", cursor: lLoading ? "wait" : "pointer", background: lOk ? T.emerald : T.cyan, color: T.bg, fontSize: 14, fontWeight: 700, fontFamily: "Geist, sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background 0.3s ease", boxShadow: lOk ? `0 0 28px ${T.emeraldGlow}` : `0 0 28px ${T.cyanGlow}`, letterSpacing: "-0.01em" }}>
                       {lLoading ? <LoadingSpinner /> : lOk ? "Signed in" : "Sign in"}
@@ -569,8 +698,26 @@ function AuthSection({ id }) {
                 {mode === "register" && (
                   <motion.form key="register" custom={dir} variants={SLIDE} initial="initial" animate="animate" exit="exit" onSubmit={doRegister} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     <FLInput id="r-em" label="Email address" type="email" value={rem} onChange={e => { setRem(e.target.value); setROk(false) }} required autoComplete="email" />
-                    <FLInput id="r-pw" label="Password" type="password" value={rpw} onChange={e => { setRpw(e.target.value); setROk(false) }} required autoComplete="new-password" />
-                    <FLInput id="r-cp" label="Confirm password" type="password" value={rcp} onChange={e => { setRcp(e.target.value); setROk(false) }} required autoComplete="new-password" />
+                    {/* Password field with show/hide toggle */}
+                    <PasswordInput
+                      id="r-pw"
+                      label="Password"
+                      value={rpw}
+                      onChange={e => { setRpw(e.target.value); setROk(false); }}
+                      autoComplete="new-password"
+                    />
+                    {/* Password strength meter */}
+                    <AnimatePresence>
+                      {rpw && <PasswordStrengthMeter password={rpw} />}
+                    </AnimatePresence>
+                    {/* Confirm password with show/hide toggle */}
+                    <PasswordInput
+                      id="r-cp"
+                      label="Confirm password"
+                      value={rcp}
+                      onChange={e => { setRcp(e.target.value); setROk(false); }}
+                      autoComplete="new-password"
+                    />
                     <FLSelect id="r-role" label="Role" value={rol} onChange={e => setRol(e.target.value)} required options={[{ value: "instructor", label: "Instructor" }, { value: "ta", label: "TA" }]} />
                     <AnimatePresence>
                       {rErr && <motion.p initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ fontSize: 12, color: T.red, background: "rgba(248,113,113,0.07)", border: "1px solid rgba(248,113,113,0.18)", borderRadius: 7, padding: "8px 12px", fontFamily: "Geist Mono, monospace" }}>{rErr}</motion.p>}
@@ -589,7 +736,7 @@ function AuthSection({ id }) {
             </div>
 
             <div style={{ marginTop: 24, paddingTop: 20, borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "center", gap: 24, flexWrap: "wrap" }}>
-              {["SOC 2 audit in progress", "End-to-end encrypted", "Full audit trail"].map(t => (
+              {["Privacy first", "End-to-end encrypted", "Beta access"].map(t => (
                 <span key={t} style={{ fontSize: 11, color: T.text3, display: "flex", alignItems: "center", gap: 5 }}>
                   <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1L1.5 3v3.5C1.5 8.9 3.2 10.5 5.5 11c2.3-.5 4-2.1 4-4.5V3L5.5 1z" stroke={T.text3} strokeWidth="1" strokeLinejoin="round" /></svg>
                   {t}

@@ -25,6 +25,66 @@ const IconCheck = () => (
     </svg>
 );
 
+// ─── Eye icon for show/hide password ─────────────────────────────────────────
+function EyeIcon({ open }) {
+    return open ? (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
+        </svg>
+    ) : (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
+            <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
+            <line x1="1" y1="1" x2="23" y2="23" />
+        </svg>
+    );
+}
+
+// ─── Password input with show/hide toggle ────────────────────────────────────
+function PasswordInput({ id, label, value, onChange, autoComplete }) {
+    const [visible, setVisible] = useState(false);
+    return (
+        <div style={{ position: "relative" }}>
+            <FLInput
+                id={id}
+                label={label}
+                type={visible ? "text" : "password"}
+                value={value}
+                onChange={onChange}
+                required
+                autoComplete={autoComplete}
+            />
+            <button
+                type="button"
+                onClick={() => setVisible(v => !v)}
+                aria-label={visible ? "Hide password" : "Show password"}
+                style={{
+                    position: "absolute",
+                    right: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: T.text3,
+                    display: "flex",
+                    alignItems: "center",
+                    padding: 4,
+                    borderRadius: 4,
+                    transition: "color 0.15s",
+                    lineHeight: 0,
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = T.cyan}
+                onMouseLeave={e => e.currentTarget.style.color = T.text3}
+            >
+                <EyeIcon open={visible} />
+            </button>
+        </div>
+    );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 const CALLOUTS = [
     { stat: "94.7%", label: "OCR extraction accuracy" },
     { stat: "11×", label: "faster grading vs manual" },
@@ -438,14 +498,13 @@ export default function Login() {
                                 />
                             </motion.div>
 
+                            {/* Password field with show/hide toggle */}
                             <motion.div variants={fieldVariant}>
-                                <FLInput
+                                <PasswordInput
                                     id="password"
                                     label="Password"
-                                    type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    required
                                     autoComplete="current-password"
                                 />
                             </motion.div>
