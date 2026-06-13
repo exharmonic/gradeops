@@ -20,10 +20,10 @@ export function UserProvider({ children }) {
     } finally {
       setUser(null)
     }
-    
+
   }, []);
 
-  useEffect(()=> {
+  useEffect(() => {
     const checkSession = async () => {
       try {
         const response = await api.get('/users/me');
@@ -31,13 +31,13 @@ export function UserProvider({ children }) {
       } catch (err) {
         console.log(err);
         setUser(null);
-      }finally {
+      } finally {
         setLoading(false)
       }
     };
     checkSession();
   }, [])
-  
+
   return (
     <UserContext.Provider value={{ user, login, logout }}>
       {!loading && children}

@@ -54,17 +54,17 @@ function PasswordInput({ id, label, value, onChange, autoComplete }) {
         onClick={() => setVisible(v => !v)}
         aria-label={visible ? "Hide password" : "Show password"}
         style={{
-          position:   "absolute",
-          right:      12,
-          top:        "50%",
-          transform:  "translateY(-50%)",
+          position: "absolute",
+          right: 12,
+          top: "50%",
+          transform: "translateY(-50%)",
           background: "none",
-          border:     "none",
-          cursor:     "pointer",
-          color:      T.text3,
-          display:    "flex",
+          border: "none",
+          cursor: "pointer",
+          color: T.text3,
+          display: "flex",
           alignItems: "center",
-          padding:    4,
+          padding: 4,
           borderRadius: 4,
           transition: "color 0.15s",
           lineHeight: 0,
@@ -80,67 +80,67 @@ function PasswordInput({ id, label, value, onChange, autoComplete }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PIPELINE_STEPS = [
-  { label: "Upload",    sub: "Bulk PDF ingestion & rubric JSON",       color: T.cyan    },
-  { label: "OCR",       sub: "Vision model handwriting extraction",     color: T.emerald },
-  { label: "AI Grade",  sub: "Agentic LLM partial-credit scoring",      color: T.cyan    },
-  { label: "TA Review", sub: "Human-in-the-loop override queue",        color: T.emerald },
-  { label: "Release",   sub: "Instructor approval & audit log export",  color: T.cyan    },
+  { label: "Upload", sub: "Bulk PDF ingestion & rubric JSON", color: T.cyan },
+  { label: "OCR", sub: "Vision model handwriting extraction", color: T.emerald },
+  { label: "AI Grade", sub: "Agentic LLM partial-credit scoring", color: T.cyan },
+  { label: "TA Review", sub: "Human-in-the-loop override queue", color: T.emerald },
+  { label: "Release", sub: "Instructor approval & audit log export", color: T.cyan },
 ];
 
 const ROLE_OPTIONS = [
   { value: "instructor", label: "Instructor" },
-  { value: "ta",         label: "Teaching Assistant (TA)" },
+  { value: "ta", label: "Teaching Assistant (TA)" },
 ];
 
 function getStrength(pw) {
-  if (!pw)            return { level: 0, label: "",           color: T.border  };
-  if (pw.length < 6)  return { level: 1, label: "Weak",       color: T.red     };
-  if (pw.length < 10) return { level: 2, label: "Fair",       color: "#f59e0b" };
-  if (pw.length < 14) return { level: 3, label: "Strong",     color: T.cyan    };
-  return               { level: 4, label: "Very strong",      color: T.emerald };
+  if (!pw) return { level: 0, label: "", color: T.border };
+  if (pw.length < 6) return { level: 1, label: "Weak", color: T.red };
+  if (pw.length < 10) return { level: 2, label: "Fair", color: "#f59e0b" };
+  if (pw.length < 14) return { level: 3, label: "Strong", color: T.cyan };
+  return { level: 4, label: "Very strong", color: T.emerald };
 }
 
 const fadeUp = (delay = 0) => ({
-  hidden:  { opacity: 0, y: 18 },
+  hidden: { opacity: 0, y: 18 },
   visible: { opacity: 1, y: 0, transition: { ...SPRING, delay } },
 });
 
 const staggerContainer = {
-  hidden:  {},
+  hidden: {},
   visible: { transition: { staggerChildren: 0.08 } },
 };
 
 const fieldVariant = {
-  hidden:  { opacity: 0, y: 12 },
+  hidden: { opacity: 0, y: 12 },
   visible: { opacity: 1, y: 0, transition: { ...SPRING } },
 };
 
 const stepVariant = {
-  hidden:  { opacity: 0, x: 32 },
-  visible: { opacity: 1, x: 0,  transition: { ...SPRING } },
+  hidden: { opacity: 0, x: 32 },
+  visible: { opacity: 1, x: 0, transition: { ...SPRING } },
 };
 
 const staggerSteps = {
-  hidden:  {},
+  hidden: {},
   visible: { transition: { staggerChildren: 0.12, delayChildren: 0.3 } },
 };
 
 const fieldErrorVariant = {
-  hidden:  { opacity: 0, y: -6, height: 0      },
-  visible: { opacity: 1, y: 0,  height: "auto" },
-  exit:    { opacity: 0, y: -4, height: 0,     transition: { duration: 0.14 } },
+  hidden: { opacity: 0, y: -6, height: 0 },
+  visible: { opacity: 1, y: 0, height: "auto" },
+  exit: { opacity: 0, y: -4, height: 0, transition: { duration: 0.14 } },
 };
 
 export default function Register() {
-  const navigate    = useNavigate();
-  const { user }    = useContext(UserContext);
+  const navigate = useNavigate();
+  const { user } = useContext(UserContext);
 
-  const [email,    setEmail]    = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirm,  setConfirm]  = useState("");
-  const [role,     setRole]     = useState("");
-  const [loading,  setLoading]  = useState(false);
-  const [success,  setSuccess]  = useState(false);
+  const [confirm, setConfirm] = useState("");
+  const [role, setRole] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [apiError, setApiError] = useState("");
   const [isNarrow, setIsNarrow] = useState(
     typeof window !== "undefined" && window.innerWidth < 768
@@ -216,207 +216,207 @@ export default function Register() {
 
   const S = {
     root: {
-      display:         "flex",
-      minHeight:       "100dvh",
+      display: "flex",
+      minHeight: "100dvh",
       backgroundColor: T.bg,
-      fontFamily:      "Geist, sans-serif",
-      overflow:        "hidden",
+      fontFamily: "Geist, sans-serif",
+      overflow: "hidden",
     },
 
     left: {
-      flex:            1,
-      display:         "flex",
-      alignItems:      "center",
-      justifyContent:  "center",
-      padding:         "clamp(24px, 4vw, 48px)",
+      flex: 1,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "clamp(24px, 4vw, 48px)",
       backgroundColor: T.surface,
-      overflowY:       "auto",
+      overflowY: "auto",
     },
 
     card: {
-      width:          "100%",
-      maxWidth:       "420px",
-      display:        "flex",
-      flexDirection:  "column",
-      paddingTop:     "clamp(16px, 3vw, 32px)",
-      paddingBottom:  "clamp(16px, 3vw, 32px)",
+      width: "100%",
+      maxWidth: "420px",
+      display: "flex",
+      flexDirection: "column",
+      paddingTop: "clamp(16px, 3vw, 32px)",
+      paddingBottom: "clamp(16px, 3vw, 32px)",
     },
 
     cardLogoRow: {
-      display:      "flex",
-      alignItems:   "center",
-      gap:          "8px",
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
       marginBottom: "28px",
     },
     cardLogoText: {
-      fontWeight:    700,
-      fontSize:      "16px",
-      color:         T.text1,
+      fontWeight: 700,
+      fontSize: "16px",
+      color: T.text1,
       letterSpacing: "-0.02em",
     },
     heading: {
-      fontWeight:    900,
-      fontSize:      "clamp(28px, 4vw, 36px)",
-      color:         T.text1,
+      fontWeight: 900,
+      fontSize: "clamp(28px, 4vw, 36px)",
+      color: T.text1,
       letterSpacing: "-0.04em",
-      lineHeight:    1.1,
-      marginBottom:  "8px",
+      lineHeight: 1.1,
+      marginBottom: "8px",
     },
     subtext: {
-      fontSize:     "14px",
-      color:        T.text2,
+      fontSize: "14px",
+      color: T.text2,
       marginBottom: "32px",
-      lineHeight:   1.5,
+      lineHeight: 1.5,
     },
 
     fieldsWrap: {
-      display:       "flex",
+      display: "flex",
       flexDirection: "column",
-      gap:           "18px",
-      marginBottom:  "24px",
+      gap: "18px",
+      marginBottom: "24px",
     },
 
     strengthWrap: {
-      marginTop:     "8px",
-      display:       "flex",
+      marginTop: "8px",
+      display: "flex",
       flexDirection: "column",
-      gap:           "5px",
+      gap: "5px",
     },
     strengthTrack: {
       display: "flex",
-      gap:     "4px",
-      height:  "3px",
+      gap: "4px",
+      height: "3px",
     },
     strengthLabel: {
-      fontSize:      "11px",
-      fontFamily:    "Geist Mono, monospace",
+      fontSize: "11px",
+      fontFamily: "Geist Mono, monospace",
       letterSpacing: "0.06em",
-      color:         T.text3,
-      transition:    "color 0.3s",
+      color: T.text3,
+      transition: "color 0.3s",
     },
 
     fieldError: {
-      fontSize:   "12px",
-      color:      T.red,
-      marginTop:  "5px",
+      fontSize: "12px",
+      color: T.red,
+      marginTop: "5px",
       fontFamily: "Geist, sans-serif",
-      overflow:   "hidden",
+      overflow: "hidden",
     },
 
     apiErrorBox: {
-      display:         "flex",
-      alignItems:      "center",
-      gap:             "10px",
-      padding:         "12px 14px",
-      borderRadius:    "10px",
+      display: "flex",
+      alignItems: "center",
+      gap: "10px",
+      padding: "12px 14px",
+      borderRadius: "10px",
       backgroundColor: "rgba(248,113,113,0.08)",
-      border:          `1px solid rgba(248,113,113,0.22)`,
-      color:           T.red,
-      fontSize:        "13px",
-      marginBottom:    "16px",
-      overflow:        "hidden",
+      border: `1px solid rgba(248,113,113,0.22)`,
+      color: T.red,
+      fontSize: "13px",
+      marginBottom: "16px",
+      overflow: "hidden",
     },
 
     signInRow: {
       textAlign: "center",
-      fontSize:  "13px",
-      color:     T.text2,
+      fontSize: "13px",
+      color: T.text2,
       marginTop: "24px",
     },
     signInLink: {
-      color:      T.cyan,
-      cursor:     "pointer",
+      color: T.cyan,
+      cursor: "pointer",
       background: "none",
-      border:     "none",
-      padding:    0,
+      border: "none",
+      padding: 0,
       fontFamily: "Geist, sans-serif",
-      fontSize:   "13px",
+      fontSize: "13px",
       fontWeight: 600,
     },
 
     right: {
-      flex:           "0 0 45%",
-      position:       "relative",
-      display:        "flex",
-      flexDirection:  "column",
+      flex: "0 0 45%",
+      position: "relative",
+      display: "flex",
+      flexDirection: "column",
       justifyContent: "center",
-      padding:        "clamp(28px, 4vw, 64px)",
-      borderLeft:     `1px solid ${T.border}`,
-      overflow:       "hidden",
+      padding: "clamp(28px, 4vw, 64px)",
+      borderLeft: `1px solid ${T.border}`,
+      overflow: "hidden",
     },
     rightGlow: {
-      position:      "absolute",
-      top:           "40%",
-      left:          "50%",
-      transform:     "translate(-50%, -50%)",
-      width:         "400px",
-      height:        "400px",
-      borderRadius:  "50%",
-      background:    `radial-gradient(circle, ${T.emeraldGlow} 0%, transparent 70%)`,
+      position: "absolute",
+      top: "40%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      width: "400px",
+      height: "400px",
+      borderRadius: "50%",
+      background: `radial-gradient(circle, ${T.emeraldGlow} 0%, transparent 70%)`,
       pointerEvents: "none",
     },
     rightGlow2: {
-      position:      "absolute",
-      top:           "-60px",
-      left:          "-60px",
-      width:         "260px",
-      height:        "260px",
-      borderRadius:  "50%",
-      background:    `radial-gradient(circle, rgba(34,211,238,0.06) 0%, transparent 70%)`,
+      position: "absolute",
+      top: "-60px",
+      left: "-60px",
+      width: "260px",
+      height: "260px",
+      borderRadius: "50%",
+      background: `radial-gradient(circle, rgba(34,211,238,0.06) 0%, transparent 70%)`,
       pointerEvents: "none",
     },
     panelLabel: {
-      fontSize:      "11px",
-      fontWeight:    600,
+      fontSize: "11px",
+      fontWeight: 600,
       letterSpacing: "0.12em",
       textTransform: "uppercase",
-      color:         T.text3,
-      marginBottom:  "36px",
-      position:      "relative",
-      zIndex:        1,
+      color: T.text3,
+      marginBottom: "36px",
+      position: "relative",
+      zIndex: 1,
     },
 
     pipelineWrap: {
-      position:      "relative",
-      zIndex:        1,
-      display:       "flex",
+      position: "relative",
+      zIndex: 1,
+      display: "flex",
       flexDirection: "column",
     },
     stepRow: {
-      display:    "flex",
+      display: "flex",
       alignItems: "flex-start",
-      gap:        "16px",
-      position:   "relative",
+      gap: "16px",
+      position: "relative",
     },
     stepLeft: {
-      display:       "flex",
+      display: "flex",
       flexDirection: "column",
-      alignItems:    "center",
-      width:         "14px",
-      flexShrink:    0,
-      paddingTop:    "2px",
+      alignItems: "center",
+      width: "14px",
+      flexShrink: 0,
+      paddingTop: "2px",
     },
     stepLine: {
-      width:           "1px",
-      flex:            1,
-      minHeight:       "36px",
+      width: "1px",
+      flex: 1,
+      minHeight: "36px",
       backgroundColor: T.border,
-      margin:          "6px 0",
+      margin: "6px 0",
     },
     stepContent: {
       paddingBottom: "32px",
-      flex:          1,
+      flex: 1,
     },
     stepLabel: {
-      fontWeight:    700,
-      fontSize:      "15px",
-      color:         T.text1,
+      fontWeight: 700,
+      fontSize: "15px",
+      color: T.text1,
       letterSpacing: "-0.02em",
-      marginBottom:  "4px",
+      marginBottom: "4px",
     },
     stepSub: {
-      fontSize:   "12.5px",
-      color:      T.text2,
+      fontSize: "12.5px",
+      color: T.text2,
       lineHeight: 1.5,
     },
   };
@@ -579,12 +579,12 @@ export default function Register() {
                 variant={success ? "ghost" : "primary"}
                 size="lg"
                 style={{
-                  width:          "100%",
+                  width: "100%",
                   justifyContent: "center",
                   ...(success ? {
                     backgroundColor: T.emeraldDim,
-                    border:          `1px solid ${T.emerald}`,
-                    color:           T.emerald,
+                    border: `1px solid ${T.emerald}`,
+                    color: T.emerald,
                   } : {}),
                 }}
               >

@@ -133,21 +133,49 @@ const MOCK_GRADES = [
 ];
 
 const RUBRIC_PLACEHOLDER = `{
-  "exam": "CS301 Midterm",
+  "exam": "MATH201 Midterm",
   "questions": [
     {
-      "id": "Q1",
-      "text": "Explain time complexity of quicksort.",
-      "points": 10,
-      "keywords": ["O(n log n)", "average case", "pivot"],
-      "partial_credit": true
+      "id": "Q3b",
+      "text": "Evaluate the definite integral \\\\int_{0}^{\\\\pi} \\\\sin(x) \\\\, dx and justify each step.",
+      "criteria": [
+        {
+          "name": "Antiderivative setup",
+          "maxPoints": 3,
+          "keywords": ["-cos(x)", "antiderivative", "FTC"]
+        },
+        {
+          "name": "Limit substitution",
+          "maxPoints": 3,
+          "keywords": ["cos(π)", "cos(0)", "-(-1)", "-1"]
+        },
+        {
+          "name": "Final answer",
+          "maxPoints": 2,
+          "keywords": ["2", "equals 2"]
+        },
+        {
+          "name": "Justification quality",
+          "maxPoints": 2,
+          "keywords": ["Fundamental Theorem", "continuity"]
+        }
+      ]
     },
     {
-      "id": "Q2",
-      "text": "Define a binary search tree.",
-      "points": 8,
-      "keywords": ["left subtree", "right subtree", "ordering"],
-      "partial_credit": true
+      "id": "Q4",
+      "text": "Find the eigenvalues of the matrix A = [[3, 1], [0, 2]].",
+      "criteria": [
+        {
+          "name": "Characteristic equation",
+          "maxPoints": 4,
+          "keywords": ["det(A - λI)", "(3-λ)(2-λ)", "λ^2 - 5λ + 6"]
+        },
+        {
+          "name": "Correct eigenvalues",
+          "maxPoints": 6,
+          "keywords": ["λ = 3", "λ = 2"]
+        }
+      ]
     }
   ]
 }`;
@@ -155,10 +183,10 @@ const RUBRIC_PLACEHOLDER = `{
 const RUBRIC_PLACEHOLDER_RAW = RUBRIC_PLACEHOLDER;
 
 const MOCK_EXAMS = [
-  { id: 1, title: "CS301 – Midterm Exam",         uploaded: "Jun 07, 2026", scripts: 182, graded: 182, status: "Completed",  rubric: JSON.parse(RUBRIC_PLACEHOLDER_RAW) },
-  { id: 2, title: "MATH201 – Linear Algebra",      uploaded: "Jun 06, 2026", scripts: 210, graded: 140, status: "In Review",  rubric: JSON.parse(RUBRIC_PLACEHOLDER_RAW) },
-  { id: 3, title: "PHY101 – Mechanics Final",      uploaded: "Jun 06, 2026", scripts: 96,  graded: 60,  status: "Processing", rubric: JSON.parse(RUBRIC_PLACEHOLDER_RAW) },
-  { id: 4, title: "CS401 – Algorithms Quiz 3",     uploaded: "Jun 05, 2026", scripts: 74,  graded: 74,  status: "Completed",  rubric: JSON.parse(RUBRIC_PLACEHOLDER_RAW) },
+  { id: 1, title: "CS301 – Midterm Exam", uploaded: "Jun 07, 2026", scripts: 182, graded: 182, status: "Completed", rubric: JSON.parse(RUBRIC_PLACEHOLDER_RAW) },
+  { id: 2, title: "MATH201 – Linear Algebra", uploaded: "Jun 06, 2026", scripts: 210, graded: 140, status: "In Review", rubric: JSON.parse(RUBRIC_PLACEHOLDER_RAW) },
+  { id: 3, title: "PHY101 – Mechanics Final", uploaded: "Jun 06, 2026", scripts: 96, graded: 60, status: "Processing", rubric: JSON.parse(RUBRIC_PLACEHOLDER_RAW) },
+  { id: 4, title: "CS401 – Algorithms Quiz 3", uploaded: "Jun 05, 2026", scripts: 74, graded: 74, status: "Completed", rubric: JSON.parse(RUBRIC_PLACEHOLDER_RAW) },
 ];
 
 /* 
@@ -166,12 +194,15 @@ const MOCK_EXAMS = [
  */
 const StatusBadge = ({ status }) => {
   const map = {
-    Processing: { color: "#f59e0b", bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.22)" },
-    "In Review": { color: T.cyan, bg: T.cyanDim, border: "rgba(34,211,238,0.18)" },
-    Completed: { color: T.emerald, bg: T.emeraldDim, border: "rgba(52,211,153,0.18)" },
-    Released: { color: T.text3, bg: "rgba(69,85,95,0.15)", border: T.border },
+    processing: { color: "#f59e0b", bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.22)" },
+    in_review: { color: T.cyan, bg: T.cyanDim, border: "rgba(34,211,238,0.18)" },
+    completed: { color: T.emerald, bg: T.emeraldDim, border: "rgba(52,211,153,0.18)" },
+    released: { color: T.text3, bg: "rgba(69,85,95,0.15)", border: T.border },
   };
-  const s = map[status] || map["Released"];
+  const s = map[status] || map["released"];
+  
+  const displayStatus = status.replace("_", " ").toUpperCase();
+
   return (
     <span style={{
       fontSize: "11px", fontWeight: 600, fontFamily: "Geist Mono, monospace",
@@ -179,7 +210,7 @@ const StatusBadge = ({ status }) => {
       border: `1px solid ${s.border}`, borderRadius: "5px", padding: "2px 8px",
       whiteSpace: "nowrap",
     }}>
-      {status.toUpperCase()}
+      {displayStatus}
     </span>
   );
 };
@@ -328,18 +359,19 @@ function SectionExams({ exams, onUploadSuccess }) {
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [removingExam, setRemovingExam] = useState(false);
 
+  useEffect(() => {
+    if (viewingExam) {
+      const updatedData = exams.find(e => e.id === viewingExam.id);
+      if (updatedData) {
+        setViewingExam(updatedData);
+      }
+    }
+  }, [exams]); // Re-run this whenever the parent fetches new exams
+
   const addFiles = (incoming) => {
     const arr = Array.from(incoming).filter(f => f.type === "application/pdf");
     setFiles(prev => [...prev, ...arr.map(f => ({ file: f, name: f.name, size: f.size, progress: 0, id: Math.random() }))]);
-    // simulate progress
-    arr.forEach((_, i) => {
-      let p = 0;
-      const iv = setInterval(() => {
-        p += Math.random() * 18 + 4;
-        if (p >= 100) { p = 100; clearInterval(iv); }
-        setFiles(prev => prev.map((x, xi) => xi === prev.length - arr.length + i ? { ...x, progress: Math.floor(p) } : x));
-      }, 120);
-    });
+
   };
 
   const validateJson = () => {
@@ -384,6 +416,10 @@ function SectionExams({ exams, onUploadSuccess }) {
       await api.post('/upload/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setFiles(prev => prev.map(f => ({ ...f, progress: percentCompleted })));
         }
       });
 
@@ -405,7 +441,13 @@ function SectionExams({ exams, onUploadSuccess }) {
     setViewingExam(exam);
     setMoreFiles([]);
     setEditingRubric(false);
-    setEditRubricJson(exam.rubric ? JSON.stringify(exam.rubric, null, 2) : RUBRIC_PLACEHOLDER);
+    let initialRubric = RUBRIC_PLACEHOLDER;
+    if (exam.rubric && Object.keys(exam.rubric).length > 0) {
+      initialRubric = typeof exam.rubric === "string"
+        ? exam.rubric
+        : JSON.stringify(exam.rubric, null, 2);
+    };
+    setEditRubricJson(initialRubric);
     setEditRubricValid(null);
     setConfirmRemove(false);
   };
@@ -420,14 +462,7 @@ function SectionExams({ exams, onUploadSuccess }) {
   const addMoreFiles = (incoming) => {
     const arr = Array.from(incoming).filter(f => f.type === "application/pdf");
     setMoreFiles(prev => [...prev, ...arr.map(f => ({ file: f, name: f.name, size: f.size, progress: 0, id: Math.random() }))]);
-    arr.forEach((_, i) => {
-      let p = 0;
-      const iv = setInterval(() => {
-        p += Math.random() * 18 + 4;
-        if (p >= 100) { p = 100; clearInterval(iv); }
-        setMoreFiles(prev => prev.map((x, xi) => xi === prev.length - arr.length + i ? { ...x, progress: Math.floor(p) } : x));
-      }, 120);
-    });
+
   };
 
   const handleUploadMore = async () => {
@@ -439,8 +474,15 @@ function SectionExams({ exams, onUploadSuccess }) {
       const formData = new FormData();
       moreFiles.forEach((f) => formData.append("files", f.file));
       formData.append("exam_id", viewingExam.id);
-      await api.post('/upload/', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setMoreFiles([]);
+      await api.post('/upload/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setMoreFiles(prev => prev.map(f => ({ ...f, progress: percentCompleted })));
+        }
+      });
       if (onUploadSuccess) onUploadSuccess();
     } catch (err) {
       alert(err.response?.data?.detail || "Failed to upload additional files.");
@@ -510,15 +552,15 @@ function SectionExams({ exams, onUploadSuccess }) {
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "24px", alignItems: "start" }}>
 
-          {/* LEFT COLUMN */}
+          {/* LEFT COLUMN */} 
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
 
             {/* Stats row */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px" }}>
               {[
                 { label: "Scripts Uploaded", value: viewingExam.scripts, color: T.text1 },
-                { label: "Graded",           value: viewingExam.graded,  color: T.cyan  },
-                { label: "Grading %",        value: `${pct}%`,           color: pct >= 85 ? T.emerald : pct >= 50 ? "#f59e0b" : T.red, mono: true },
+                { label: "Graded", value: viewingExam.graded, color: T.cyan },
+                { label: "Grading %", value: `${pct}%`, color: pct >= 85 ? T.emerald : pct >= 50 ? "#f59e0b" : T.red, mono: true },
               ].map(({ label, value, color, mono }) => (
                 <div key={label} style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "12px", padding: "18px 20px" }}>
                   <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: T.text3, fontFamily: "Geist Mono, monospace", marginBottom: "8px" }}>{label}</div>
@@ -598,7 +640,9 @@ function SectionExams({ exams, onUploadSuccess }) {
                 {!editingRubric ? (
                   <motion.div key="rubric-preview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     <div style={{ backgroundColor: T.surfaceHigh, border: `1px solid ${T.border}`, borderRadius: "8px", padding: "14px", fontFamily: "Geist Mono, monospace", fontSize: "11.5px", color: T.text2, lineHeight: 1.7, maxHeight: "160px", overflowY: "auto", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                      {viewingExam.rubric ? JSON.stringify(viewingExam.rubric, null, 2) : "No rubric attached to this exam."}
+                      {viewingExam.rubric && Object.keys(viewingExam.rubric).length > 0
+                        ? (typeof viewingExam.rubric === "string" ? viewingExam.rubric : JSON.stringify(viewingExam.rubric, null, 2))
+                        : "No rubric attached to this exam."}
                     </div>
                   </motion.div>
                 ) : (
@@ -641,10 +685,10 @@ function SectionExams({ exams, onUploadSuccess }) {
             <div style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "20px" }}>
               <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.1em", color: T.text3, fontFamily: "Geist Mono, monospace", marginBottom: "14px" }}>EXAM INFO</div>
               {[
-                { label: "Title",        value: viewingExam.title    },
-                { label: "Upload Date",  value: viewingExam.uploaded },
-                { label: "Total Scripts",value: viewingExam.scripts  },
-                { label: "Status",       value: <StatusBadge status={viewingExam.status} /> },
+                { label: "Title", value: viewingExam.title },
+                { label: "Upload Date", value: viewingExam.uploaded },
+                { label: "Total Scripts", value: viewingExam.scripts },
+                { label: "Status", value: <StatusBadge status={viewingExam.status} /> },
               ].map(({ label, value }) => (
                 <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${T.border}` }}>
                   <span style={{ fontSize: "12px", color: T.text3 }}>{label}</span>
@@ -830,11 +874,35 @@ function SectionExams({ exams, onUploadSuccess }) {
  */
 function SectionGrades() {
   const [search, setSearch] = useState("");
+  const { user } = useContext(UserContext)
+  const [grades, setGrades] = useState([])
+  const [loadingGrades, setLoadingGrades] = useState(false)
 
-  const filtered = MOCK_GRADES.filter(g =>
+const fetchGrades = useCallback(async () => {
+    if (!user) return;
+    try {
+      setLoadingGrades(true);
+      const response = await api.get('/upload/instructor_exams');
+      const data = response.data;
+      setGrades(data && data.length > 0 ? data : MOCK_GRADES);
+    } catch (err) {
+      console.error("Failed to fetch exams", err);
+      setGrades(MOCK_GRADES);
+    } finally {
+      setLoadingGrades(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchGrades();
+  }, [fetchGrades]);
+
+  const filtered = grades.filter(g =>
     g.id.toLowerCase().includes(search.toLowerCase()) ||
     g.exam.toLowerCase().includes(search.toLowerCase())
   );
+
+
 
   return (
     <motion.div key="grades" {...sectionTransition}>
@@ -878,7 +946,7 @@ function SectionGrades() {
                       <span style={{ fontFamily: "Geist Mono, monospace", fontSize: "13px", fontWeight: 700, color: PctColor(pct) }}>{pct}%</span>
                     </td>
                     <td style={{ padding: "13px 20px" }}>
-                      <StatusBadge status={pct >= 50 ? "Completed" : "Processing"} />
+                      <StatusBadge status={pct >= 50 ? "completed" : "processing"} />
                     </td>
                   </motion.tr>
                 );
@@ -896,14 +964,14 @@ function SectionGrades() {
  */
 const SECTION_META = {
   overview: { title: "Overview", sub: "Your grading workspace at a glance" },
-  exams:    { title: "Exams",    sub: "Upload and manage exam batches"      },
-  grades:   { title: "Grades",   sub: "Review scores and release to students" },
+  exams: { title: "Exams", sub: "Upload and manage exam batches" },
+  grades: { title: "Grades", sub: "Review scores and release to students" },
 };
 
 const PATH_TO_SECTION = {
-  "/instructor":         "overview",
-  "/instructor/exams":   "exams",
-  "/instructor/grades":  "grades",
+  "/instructor": "overview",
+  "/instructor/exams": "exams",
+  "/instructor/grades": "grades",
 };
 
 /* 

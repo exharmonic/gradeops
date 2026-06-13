@@ -5,8 +5,8 @@ import T from "../tokens";
 import { UserContext } from "../context/UserContext";
 
 export default function Dashboard() {
-  const navigate   = useNavigate();
-  const { user, loading }   = useContext(UserContext);
+  const navigate = useNavigate();
+  const { user, loading } = useContext(UserContext);
 
   useEffect(() => {
     if (loading) return;
@@ -22,13 +22,13 @@ export default function Dashboard() {
 
   return (
     <div style={{
-      display:         "flex",
-      flexDirection:   "column",
-      alignItems:      "center",
-      justifyContent:  "center",
-      minHeight:       "100dvh",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: "100dvh",
       backgroundColor: T.bg,
-      gap:             "16px",
+      gap: "16px",
     }}>
       <motion.svg
         width="28" height="28" viewBox="0 0 24 24" fill="none"
@@ -40,9 +40,9 @@ export default function Dashboard() {
       </motion.svg>
 
       <span style={{
-        fontFamily:    "Geist Mono, monospace",
-        fontSize:      "12px",
-        color:         T.text3,
+        fontFamily: "Geist Mono, monospace",
+        fontSize: "12px",
+        color: T.text3,
         letterSpacing: "0.04em",
       }}>
         Loading your workspace...

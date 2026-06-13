@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, Suspense, useMemo, useCallback } from "react";
+import { useRef, useState, useEffect, Suspense, useMemo, useCallback, useContext } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Points, PointMaterial } from "@react-three/drei";
 import {
@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import T, { EASE_EXPO, SPRING, SPRING_LG } from "../tokens";
 import { MagBtn, Dot, Arrow, LoadingSpinner, FLInput, FLSelect } from "../components/ui";
+import { UserContext } from "../context/UserContext";
 
 function Nav({ onAuth }) {
   const { scrollY } = useScroll();
@@ -575,6 +576,7 @@ const SLIDE = {
 
 function AuthSection({ id }) {
   const [mode, setMode] = useState("login");
+  const {login} = useContext(UserContext)
   const [dir, setDir] = useState(1);
   const [lem, setLem] = useState(""); const [lpw, setLpw] = useState("");
   const [lLoading, setLLoading] = useState(false); const [lOk, setLOk] = useState(false);

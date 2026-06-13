@@ -86,54 +86,54 @@ const Icons = {
    NAV DEFINITIONS
  */
 const INSTRUCTOR_NAV = [
-  { label: "Overview", icon: Icons.Overview, path: "/instructor"         },
-  { label: "Exams",    icon: Icons.Exams,    path: "/instructor/exams"   },
-  { label: "Grades",   icon: Icons.Grades,   path: "/instructor/grades"  },
+  { label: "Overview", icon: Icons.Overview, path: "/instructor" },
+  { label: "Exams", icon: Icons.Exams, path: "/instructor/exams" },
+  { label: "Grades", icon: Icons.Grades, path: "/instructor/grades" },
 ];
 
 const TA_NAV = [
-  { label: "Review Queue", icon: Icons.Inbox,       path: "/ta"           },
-  { label: "In Progress",  icon: Icons.Spinner,     path: "/ta/progress"  },
-  { label: "Completed",    icon: Icons.CheckCircle, path: "/ta/completed" },
-  { label: "Flagged",      icon: Icons.Flag,        path: "/ta/flagged"   },
+  { label: "Review Queue", icon: Icons.Inbox, path: "/ta" },
+  { label: "In Progress", icon: Icons.Spinner, path: "/ta/progress" },
+  { label: "Completed", icon: Icons.CheckCircle, path: "/ta/completed" },
+  { label: "Flagged", icon: Icons.Flag, path: "/ta/flagged" },
 ];
 
 /* 
    ANIMATION VARIANTS
  */
 const sidebarVariant = {
-  hidden:  { x: -20, opacity: 0 },
-  visible: { x: 0,   opacity: 1, transition: { ...SPRING_LG } },
+  hidden: { x: -20, opacity: 0 },
+  visible: { x: 0, opacity: 1, transition: { ...SPRING_LG } },
 };
 
 const navStagger = {
-  hidden:  {},
+  hidden: {},
   visible: { transition: { staggerChildren: 0.04, delayChildren: 0.15 } },
 };
 
 const navItemVariant = {
-  hidden:  { opacity: 0, x: -8 },
-  visible: { opacity: 1, x: 0,  transition: { ...SPRING } },
+  hidden: { opacity: 0, x: -8 },
+  visible: { opacity: 1, x: 0, transition: { ...SPRING } },
 };
 
 const drawerVariant = {
-  hidden:  { x: -220 },
-  visible: { x: 0,    transition: { ...SPRING_LG } },
-  exit:    { x: -220, transition: { ...SPRING } },
+  hidden: { x: -220 },
+  visible: { x: 0, transition: { ...SPRING_LG } },
+  exit: { x: -220, transition: { ...SPRING } },
 };
 
 /* 
    HELPERS
  */
-const initials  = (email = "") => email[0]?.toUpperCase() ?? "?";
-const truncate  = (str = "", n = 18) => str.length > n ? str.slice(0, n) + "…" : str;
+const initials = (email = "") => email[0]?.toUpperCase() ?? "?";
+const truncate = (str = "", n = 18) => str.length > n ? str.slice(0, n) + "…" : str;
 
 /* 
    NAV ITEM
  */
 function NavItem({ item, active, collapsed, onClick }) {
   const isActive = active === item.path;
-  const Icon     = item.icon;
+  const Icon = item.icon;
 
   return (
     <motion.div
@@ -145,11 +145,11 @@ function NavItem({ item, active, collapsed, onClick }) {
         <motion.div
           layoutId="active-pill"
           style={{
-            position:        "absolute",
-            inset:           0,
-            borderRadius:    "8px",
+            position: "absolute",
+            inset: 0,
+            borderRadius: "8px",
             backgroundColor: T.cyanDim,
-            boxShadow:       `inset 2px 0 0 ${T.cyan}`,
+            boxShadow: `inset 2px 0 0 ${T.cyan}`,
           }}
           transition={{ ...SPRING }}
         />
@@ -160,26 +160,26 @@ function NavItem({ item, active, collapsed, onClick }) {
         whileHover={{ backgroundColor: isActive ? T.cyanDim : T.surfaceHigh, scale: 1.01 }}
         whileTap={{ scale: 0.98 }}
         style={{
-          position:        "relative",
-          zIndex:          1,
-          display:         "flex",
-          alignItems:      "center",
-          gap:             collapsed ? 0 : "10px",
-          justifyContent:  collapsed ? "center" : "flex-start",
-          width:           "100%",
-          padding:         collapsed ? "10px" : "10px 12px",
-          borderRadius:    "8px",
-          border:          "none",
-          background:      "transparent",
-          cursor:          "pointer",
-          color:           isActive ? T.cyan : T.text2,
-          fontSize:        "13.5px",
-          fontFamily:      "Geist, sans-serif",
-          fontWeight:      isActive ? 600 : 400,
-          letterSpacing:   "-0.01em",
-          transition:      "color 0.15s, background-color 0.15s",
-          whiteSpace:      "nowrap",
-          overflow:        "hidden",
+          position: "relative",
+          zIndex: 1,
+          display: "flex",
+          alignItems: "center",
+          gap: collapsed ? 0 : "10px",
+          justifyContent: collapsed ? "center" : "flex-start",
+          width: "100%",
+          padding: collapsed ? "10px" : "10px 12px",
+          borderRadius: "8px",
+          border: "none",
+          background: "transparent",
+          cursor: "pointer",
+          color: isActive ? T.cyan : T.text2,
+          fontSize: "13.5px",
+          fontFamily: "Geist, sans-serif",
+          fontWeight: isActive ? 600 : 400,
+          letterSpacing: "-0.01em",
+          transition: "color 0.15s, background-color 0.15s",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
         }}
         title={collapsed ? item.label : undefined}
       >
@@ -209,7 +209,7 @@ function NavItem({ item, active, collapsed, onClick }) {
    SIDEBAR INNER CONTENT
  */
 function SidebarContent({ collapsed, activeRoute, onNavigate, onClose }) {
-  const navigate        = useNavigate();
+  const navigate = useNavigate();
   const { user, logout } = useContext(UserContext);
 
   const navItems = user?.role === "instructor" ? INSTRUCTOR_NAV : TA_NAV;
@@ -228,23 +228,23 @@ function SidebarContent({ collapsed, activeRoute, onNavigate, onClose }) {
 
   return (
     <div style={{
-      display:        "flex",
-      flexDirection:  "column",
-      height:         "100%",
-      padding:        "0",
+      display: "flex",
+      flexDirection: "column",
+      height: "100%",
+      padding: "0",
     }}>
 
       {/* ── TOP: logo ── */}
       <div style={{
-        padding:       "20px 16px 16px",
-        borderBottom:  `1px solid ${T.border}`,
+        padding: "20px 16px 16px",
+        borderBottom: `1px solid ${T.border}`,
       }}>
         <div style={{
-          display:       "flex",
-          alignItems:    "center",
-          gap:           collapsed ? 0 : "10px",
+          display: "flex",
+          alignItems: "center",
+          gap: collapsed ? 0 : "10px",
           justifyContent: collapsed ? "center" : "flex-start",
-          marginBottom:  collapsed ? 0 : "10px",
+          marginBottom: collapsed ? 0 : "10px",
         }}>
           <span style={{ flexShrink: 0 }}>
             <Icons.Logo />
@@ -260,26 +260,26 @@ function SidebarContent({ collapsed, activeRoute, onNavigate, onClose }) {
                 style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden" }}
               >
                 <span style={{
-                  fontFamily:    "Geist, sans-serif",
-                  fontWeight:    700,
-                  fontSize:      "15px",
-                  color:         T.text1,
+                  fontFamily: "Geist, sans-serif",
+                  fontWeight: 700,
+                  fontSize: "15px",
+                  color: T.text1,
                   letterSpacing: "-0.02em",
-                  whiteSpace:    "nowrap",
+                  whiteSpace: "nowrap",
                 }}>
                   GradeOps
                 </span>
                 <span style={{
-                  fontSize:        "10px",
-                  fontWeight:      600,
-                  fontFamily:      "Geist Mono, monospace",
-                  letterSpacing:   "0.08em",
-                  color:           T.emerald,
+                  fontSize: "10px",
+                  fontWeight: 600,
+                  fontFamily: "Geist Mono, monospace",
+                  letterSpacing: "0.08em",
+                  color: T.emerald,
                   backgroundColor: T.emeraldDim,
-                  padding:         "2px 6px",
-                  borderRadius:    "4px",
-                  border:          `1px solid ${T.emeraldGlow}`,
-                  whiteSpace:      "nowrap",
+                  padding: "2px 6px",
+                  borderRadius: "4px",
+                  border: `1px solid ${T.emeraldGlow}`,
+                  whiteSpace: "nowrap",
                 }}>
                   BETA
                 </span>
@@ -295,12 +295,12 @@ function SidebarContent({ collapsed, activeRoute, onNavigate, onClose }) {
         initial="hidden"
         animate="visible"
         style={{
-          flex:       1,
-          overflowY:  "auto",
-          padding:    "12px 8px",
-          display:    "flex",
+          flex: 1,
+          overflowY: "auto",
+          padding: "12px 8px",
+          display: "flex",
           flexDirection: "column",
-          gap:        "2px",
+          gap: "2px",
         }}
       >
         {navItems.map((item) => (
@@ -316,35 +316,35 @@ function SidebarContent({ collapsed, activeRoute, onNavigate, onClose }) {
 
       {/* ── BOTTOM: user + logout ── */}
       <div style={{
-        borderTop:  `1px solid ${T.border}`,
-        padding:    "12px 8px",
-        display:    "flex",
+        borderTop: `1px solid ${T.border}`,
+        padding: "12px 8px",
+        display: "flex",
         flexDirection: "column",
-        gap:        "8px",
+        gap: "8px",
       }}>
         {/* user info row */}
         <div style={{
-          display:        "flex",
-          alignItems:     "center",
-          gap:            collapsed ? 0 : "10px",
+          display: "flex",
+          alignItems: "center",
+          gap: collapsed ? 0 : "10px",
           justifyContent: collapsed ? "center" : "flex-start",
-          padding:        "6px 4px",
+          padding: "6px 4px",
         }}>
           {/* avatar */}
           <div style={{
-            width:           "30px",
-            height:          "30px",
-            borderRadius:    "50%",
+            width: "30px",
+            height: "30px",
+            borderRadius: "50%",
             backgroundColor: T.cyanDim,
-            border:          `1px solid rgba(34,211,238,0.2)`,
-            display:         "flex",
-            alignItems:      "center",
-            justifyContent:  "center",
-            color:           T.cyan,
-            fontFamily:      "Geist, sans-serif",
-            fontWeight:      700,
-            fontSize:        "13px",
-            flexShrink:      0,
+            border: `1px solid rgba(34,211,238,0.2)`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: T.cyan,
+            fontFamily: "Geist, sans-serif",
+            fontWeight: 700,
+            fontSize: "13px",
+            flexShrink: 0,
           }}>
             {initials(user?.email)}
           </div>
@@ -360,28 +360,28 @@ function SidebarContent({ collapsed, activeRoute, onNavigate, onClose }) {
                 style={{ overflow: "hidden", minWidth: 0 }}
               >
                 <div style={{
-                  fontFamily:    "Geist, sans-serif",
-                  fontSize:      "12px",
-                  color:         T.text2,
-                  whiteSpace:    "nowrap",
-                  overflow:      "hidden",
-                  textOverflow:  "ellipsis",
-                  maxWidth:      "130px",
+                  fontFamily: "Geist, sans-serif",
+                  fontSize: "12px",
+                  color: T.text2,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  maxWidth: "130px",
                 }}>
                   {truncate(user?.email ?? "")}
                 </div>
                 <div style={{
-                  display:         "inline-flex",
-                  alignItems:      "center",
-                  marginTop:       "3px",
-                  fontSize:        "10px",
-                  fontWeight:      600,
-                  fontFamily:      "Geist Mono, monospace",
-                  letterSpacing:   "0.07em",
-                  color:           T.cyan,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  marginTop: "3px",
+                  fontSize: "10px",
+                  fontWeight: 600,
+                  fontFamily: "Geist Mono, monospace",
+                  letterSpacing: "0.07em",
+                  color: T.cyan,
                   backgroundColor: T.cyanDim,
-                  padding:         "1px 6px",
-                  borderRadius:    "4px",
+                  padding: "1px 6px",
+                  borderRadius: "4px",
                 }}>
                   {roleLabel}
                 </div>
@@ -396,20 +396,20 @@ function SidebarContent({ collapsed, activeRoute, onNavigate, onClose }) {
           whileHover={{ backgroundColor: "rgba(248,113,113,0.07)", color: T.red }}
           whileTap={{ scale: 0.97 }}
           style={{
-            display:        "flex",
-            alignItems:     "center",
+            display: "flex",
+            alignItems: "center",
             justifyContent: collapsed ? "center" : "flex-start",
-            gap:            collapsed ? 0 : "8px",
-            width:          "100%",
-            padding:        collapsed ? "9px" : "9px 12px",
-            borderRadius:   "8px",
-            border:         "none",
-            background:     "transparent",
-            cursor:         "pointer",
-            color:          T.text3,
-            fontFamily:     "Geist, sans-serif",
-            fontSize:       "13px",
-            transition:     "color 0.15s, background-color 0.15s",
+            gap: collapsed ? 0 : "8px",
+            width: "100%",
+            padding: collapsed ? "9px" : "9px 12px",
+            borderRadius: "8px",
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            color: T.text3,
+            fontFamily: "Geist, sans-serif",
+            fontSize: "13px",
+            transition: "color 0.15s, background-color 0.15s",
           }}
           title={collapsed ? "Sign out" : undefined}
         >
@@ -440,7 +440,7 @@ function SidebarContent({ collapsed, activeRoute, onNavigate, onClose }) {
  */
 export default function Sidebar({ activeRoute, onNavigate }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [screenW,    setScreenW]    = useState(
+  const [screenW, setScreenW] = useState(
     typeof window !== "undefined" ? window.innerWidth : 1280
   );
 
@@ -450,9 +450,9 @@ export default function Sidebar({ activeRoute, onNavigate }) {
     return () => window.removeEventListener("resize", handler);
   }, []);
 
-  const isMobile    = screenW < 768;
-  const isTablet    = screenW >= 768 && screenW < 1024;
-  const collapsed   = isTablet;
+  const isMobile = screenW < 768;
+  const isTablet = screenW >= 768 && screenW < 1024;
+  const collapsed = isTablet;
   const sidebarWidth = collapsed ? 60 : 220;
 
   /* close drawer on nav */
@@ -469,14 +469,14 @@ export default function Sidebar({ activeRoute, onNavigate }) {
         animate={{ x: 0, opacity: 1, width: sidebarWidth }}
         transition={{ ...SPRING_LG }}
         style={{
-          position:        "fixed",
-          top:             0,
-          left:            0,
-          height:          "100vh",
-          zIndex:          50,
+          position: "fixed",
+          top: 0,
+          left: 0,
+          height: "100vh",
+          zIndex: 50,
           backgroundColor: T.surface,
-          borderRight:     `1px solid ${T.border}`,
-          overflow:        "hidden",
+          borderRight: `1px solid ${T.border}`,
+          overflow: "hidden",
         }}
       >
         <SidebarContent
@@ -498,20 +498,20 @@ export default function Sidebar({ activeRoute, onNavigate }) {
         whileHover={{ backgroundColor: T.surfaceHigh }}
         whileTap={{ scale: 0.95 }}
         style={{
-          position:        "fixed",
-          top:             "16px",
-          left:            "16px",
-          zIndex:          100,
-          display:         "flex",
-          alignItems:      "center",
-          justifyContent:  "center",
-          width:           "40px",
-          height:          "40px",
-          borderRadius:    "10px",
-          border:          `1px solid ${T.border}`,
+          position: "fixed",
+          top: "16px",
+          left: "16px",
+          zIndex: 100,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "40px",
+          height: "40px",
+          borderRadius: "10px",
+          border: `1px solid ${T.border}`,
           backgroundColor: T.surface,
-          cursor:          "pointer",
-          color:           T.text1,
+          cursor: "pointer",
+          color: T.text1,
         }}
       >
         <Icons.Hamburger />
@@ -530,9 +530,9 @@ export default function Sidebar({ activeRoute, onNavigate }) {
               transition={{ duration: 0.22 }}
               onClick={() => setMobileOpen(false)}
               style={{
-                position:        "fixed",
-                inset:           0,
-                zIndex:          90,
+                position: "fixed",
+                inset: 0,
+                zIndex: 90,
                 backgroundColor: T.bg,
               }}
             />
@@ -545,14 +545,14 @@ export default function Sidebar({ activeRoute, onNavigate }) {
               animate="visible"
               exit="exit"
               style={{
-                position:        "fixed",
-                top:             0,
-                left:            0,
-                height:          "100vh",
-                width:           "220px",
-                zIndex:          95,
+                position: "fixed",
+                top: 0,
+                left: 0,
+                height: "100vh",
+                width: "220px",
+                zIndex: 95,
                 backgroundColor: T.surface,
-                borderRight:     `1px solid ${T.border}`,
+                borderRight: `1px solid ${T.border}`,
               }}
             >
               {/* close button */}
@@ -561,20 +561,20 @@ export default function Sidebar({ activeRoute, onNavigate }) {
                 whileHover={{ backgroundColor: T.surfaceHigh }}
                 whileTap={{ scale: 0.95 }}
                 style={{
-                  position:        "absolute",
-                  top:             "16px",
-                  right:           "12px",
-                  zIndex:          1,
-                  display:         "flex",
-                  alignItems:      "center",
-                  justifyContent:  "center",
-                  width:           "30px",
-                  height:          "30px",
-                  borderRadius:    "8px",
-                  border:          "none",
+                  position: "absolute",
+                  top: "16px",
+                  right: "12px",
+                  zIndex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "30px",
+                  height: "30px",
+                  borderRadius: "8px",
+                  border: "none",
                   backgroundColor: "transparent",
-                  cursor:          "pointer",
-                  color:           T.text3,
+                  cursor: "pointer",
+                  color: T.text3,
                 }}
               >
                 <Icons.Close />

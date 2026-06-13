@@ -37,7 +37,7 @@ export function MagBtn({ children, onClick, variant = "primary", size = "md", ty
   const onLeave = () => setPos({ x: 0, y: 0 });
 
   const pad = size === "lg" ? "11px 28px" : "7px 16px";
-  const fs  = size === "lg" ? 15 : 13;
+  const fs = size === "lg" ? 15 : 13;
 
   const base = {
     display: "inline-flex", alignItems: "center", gap: 6,
@@ -48,9 +48,9 @@ export function MagBtn({ children, onClick, variant = "primary", size = "md", ty
 
   const vs = {
     primary: { ...base, background: T.cyan, color: T.bg, boxShadow: `0 0 22px ${T.cyanGlow}` },
-    ghost:   { ...base, background: "transparent", color: T.text2, border: `1px solid ${T.border}` },
-    white:   { ...base, background: "rgba(255,255,255,0.07)", color: T.text1, border: `1px solid ${T.borderMid}` },
-    danger:  { ...base, background: "rgba(248,113,113,0.12)", color: T.red, border: `1px solid rgba(248,113,113,0.2)` },
+    ghost: { ...base, background: "transparent", color: T.text2, border: `1px solid ${T.border}` },
+    white: { ...base, background: "rgba(255,255,255,0.07)", color: T.text1, border: `1px solid ${T.borderMid}` },
+    danger: { ...base, background: "rgba(248,113,113,0.12)", color: T.red, border: `1px solid rgba(248,113,113,0.2)` },
   };
 
   return (

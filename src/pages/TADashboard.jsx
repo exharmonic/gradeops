@@ -4,131 +4,26 @@ import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "../components/Sidebar";
 import { MagBtn, LoadingSpinner, Dot } from "../components/ui";
 import T, { SPRING, SPRING_LG, EASE_EXPO } from "../tokens";
+import api from "../services/api";
 
 // Section routing
 const PATH_TO_SECTION = {
-  "/ta":           "queue",
-  "/ta/progress":  "progress",
+  "/ta": "queue",
+  "/ta/progress": "progress",
   "/ta/completed": "completed",
-  "/ta/flagged":   "flagged",
+  "/ta/flagged": "flagged",
 };
 
 const SECTION_META = {
-  queue:     { title: "Review Queue",  sub: "AI-graded scripts awaiting your decision"  },
-  progress:  { title: "In Progress",   sub: "Scripts you have started reviewing"         },
-  completed: { title: "Completed",     sub: "Scripts you have approved or overridden"    },
-  flagged:   { title: "Flagged",       sub: "Scripts flagged for senior review"          },
+  queue: { title: "Review Queue", sub: "AI-graded scripts awaiting your decision" },
+  progress: { title: "In Progress", sub: "Scripts you have started reviewing" },
+  completed: { title: "Completed", sub: "Scripts you have approved or overridden" },
+  flagged: { title: "Flagged", sub: "Scripts flagged for senior review" },
 };
-
-// Mock Data
-const MOCK_QUEUE = [
-  {
-    id: "q1", studentId: "STU-2847", questionRef: "Q3b",
-    questionText: "Q3b: Evaluate the definite integral ∫₀^π sin(x) dx and justify each step.",
-    rubric: [
-      { name: "Antiderivative setup", maxPoints: 3, keywords: ["−cos(x)", "antiderivative", "FTC"] },
-      { name: "Limit substitution", maxPoints: 3, keywords: ["cos(π)", "cos(0)", "−(−1)", "−1"] },
-      { name: "Final answer", maxPoints: 2, keywords: ["2", "equals 2"] },
-      { name: "Justification quality", maxPoints: 2, keywords: ["Fundamental Theorem", "continuity"] },
-    ],
-    ocrText: "∫₀^π sin(x) dx = [-cos(x)]₀^π\n= -cos(π) - (-cos(0))\n= -(-1) - (-1)\n= 1 + 1\n= 2\n\nBy FTC part 2, since sin(x) is continuous on [0,π], the integral equals the antiderivative evaluated at limits.",
-    ocrConfidence: 94.2, aiScore: 9, maxScore: 10,
-    aiJustification: "Student correctly identifies −cos(x) as the antiderivative and applies the Fundamental Theorem of Calculus. Limit substitution is accurate. Minor deduction: justification omits explicit mention of continuity requirement for FTC Part 2 application.",
-    rubricMatch: [
-      { name: "Antiderivative setup", awarded: 3, max: 3, status: "full" },
-      { name: "Limit substitution", awarded: 3, max: 3, status: "full" },
-      { name: "Final answer", awarded: 2, max: 2, status: "full" },
-      { name: "Justification quality", awarded: 1, max: 2, status: "partial" },
-    ],
-    confidence: 91, status: "pending", timeAgo: "2 min ago", similarityFlag: null,
-  },
-  {
-    id: "q2", studentId: "STU-1193", questionRef: "Q2a",
-    questionText: "Q2a: Find the eigenvalues of the matrix A = [[3, 1], [0, 2]] and state their geometric multiplicity.",
-    rubric: [
-      { name: "Characteristic polynomial", maxPoints: 3, keywords: ["det(A−λI)", "λ²−5λ+6", "(λ−3)(λ−2)"] },
-      { name: "Eigenvalue identification", maxPoints: 2, keywords: ["λ=3", "λ=2"] },
-      { name: "Geometric multiplicity", maxPoints: 3, keywords: ["dim(null)", "eigenspace", "multiplicity 1"] },
-      { name: "Notation correctness", maxPoints: 2, keywords: ["geom mult", "algebraic", "triangular"] },
-    ],
-    ocrText: "det(A - λI) = (3-λ)(2-λ) = λ² - 5λ + 6 = (λ-3)(λ-2)\nEigenvalues: λ₁ = 3, λ₂ = 2\nFor λ=3: gm=1\nFor λ=2: gm=1",
-    ocrConfidence: 88.7, aiScore: 9, maxScore: 10,
-    aiJustification: "Characteristic polynomial correctly derived. Both eigenvalues correctly identified. Geometric multiplicities computed correctly. Minor notation inconsistency: student writes 'gm' without defining the abbreviation.",
-    rubricMatch: [
-      { name: "Characteristic polynomial", awarded: 3, max: 3, status: "full" },
-      { name: "Eigenvalue identification", awarded: 2, max: 2, status: "full" },
-      { name: "Geometric multiplicity", awarded: 3, max: 3, status: "full" },
-      { name: "Notation correctness", awarded: 1, max: 2, status: "partial" },
-    ],
-    confidence: 85, status: "pending", timeAgo: "5 min ago",
-    similarityFlag: { count: 3, papers: ["STU-0412", "STU-2203", "STU-3301"] },
-  },
-  {
-    id: "q3", studentId: "STU-3301", questionRef: "Q4c",
-    questionText: "Q4c: Apply the Divergence Theorem to compute ∬_S F·dS where F = (x², y², z²) over the unit cube [0,1]³.",
-    rubric: [
-      { name: "Divergence computation", maxPoints: 3, keywords: ["div F", "2x+2y+2z", "∂F/∂x"] },
-      { name: "Volume integral setup", maxPoints: 3, keywords: ["∫∫∫", "[0,1]³", "dV"] },
-      { name: "Evaluation", maxPoints: 3, keywords: ["2", "correct integral", "iterated"] },
-      { name: "Theorem statement", maxPoints: 1, keywords: ["Gauss", "divergence theorem", "closed surface"] },
-    ],
-    ocrText: "div F = 2x + 2y + 2z\nBy Divergence Theorem:\n∬_S F·dS = ∫∫∫_V div F dV = ∫₀¹∫₀¹∫₀¹ (2x+2y+2z) dz dy dx = 3",
-    ocrConfidence: 76.4, aiScore: 10, maxScore: 10,
-    aiJustification: "Perfect solution. Divergence computed correctly. Divergence theorem invoked with proper statement. Triple integral evaluated correctly. Final answer of 3 is correct.",
-    rubricMatch: [
-      { name: "Divergence computation", awarded: 3, max: 3, status: "full" },
-      { name: "Volume integral setup", awarded: 3, max: 3, status: "full" },
-      { name: "Evaluation", awarded: 3, max: 3, status: "full" },
-      { name: "Theorem statement", awarded: 1, max: 1, status: "full" },
-    ],
-    confidence: 97, status: "pending", timeAgo: "8 min ago", similarityFlag: null,
-  },
-  {
-    id: "q4", studentId: "STU-0412", questionRef: "Q1a",
-    questionText: "Q1a: State and prove the Cauchy-Schwarz inequality for inner product spaces.",
-    rubric: [
-      { name: "Inequality statement", maxPoints: 2, keywords: ["|⟨u,v⟩|²", "≤", "‖u‖²‖v‖²"] },
-      { name: "Proof setup", maxPoints: 3, keywords: ["consider", "‖u−tv‖", "quadratic in t"] },
-      { name: "Discriminant argument", maxPoints: 3, keywords: ["b²−4ac≤0", "discriminant", "non-negative"] },
-      { name: "Equality condition", maxPoints: 2, keywords: ["linearly dependent", "t₀", "equality iff"] },
-    ],
-    ocrText: "Statement: |⟨u,v⟩|² ≤ ‖u‖²‖v‖²\nProof: For t ∈ ℝ, consider f(t) = ‖u - tv‖² ≥ 0\nDiscriminant ≤ 0: hence |⟨u,v⟩|² ≤ ‖u‖²‖v‖²\n[Equality condition not addressed]",
-    ocrConfidence: 91.1, aiScore: 7, maxScore: 10,
-    aiJustification: "Statement is correct. Proof via discriminant argument is valid. However, equality condition is completely absent — student does not address when equality holds (u and v linearly dependent). This costs 2 full marks.",
-    rubricMatch: [
-      { name: "Inequality statement", awarded: 2, max: 2, status: "full" },
-      { name: "Proof setup", awarded: 3, max: 3, status: "full" },
-      { name: "Discriminant argument", awarded: 2, max: 3, status: "partial" },
-      { name: "Equality condition", awarded: 0, max: 2, status: "none" },
-    ],
-    confidence: 55, status: "flagged", timeAgo: "12 min ago",
-    similarityFlag: { count: 3, papers: ["STU-1193", "STU-2203", "STU-3301"] },
-  },
-  {
-    id: "q5", studentId: "STU-5571", questionRef: "Q2b",
-    questionText: "Q2b: Using Lagrange multipliers, find the extrema of f(x,y) = x²+y² subject to x+y−1 = 0.",
-    rubric: [
-      { name: "Lagrangian setup", maxPoints: 3, keywords: ["∇f = λ∇g", "2x=λ", "2y=λ"] },
-      { name: "System solution", maxPoints: 3, keywords: ["x=y=1/2", "λ=1"] },
-      { name: "Extremum classification", maxPoints: 2, keywords: ["minimum", "f=1/2"] },
-      { name: "Boundary analysis", maxPoints: 2, keywords: ["no maximum", "unbounded"] },
-    ],
-    ocrText: "∇f = λ∇g → 2x=λ, 2y=λ → x=y\nx+y=1 → x=y=1/2, λ=1\nf(1/2,1/2)=1/2 ← minimum\nNo maximum since f is unbounded along constraint.",
-    ocrConfidence: 89.3, aiScore: 10, maxScore: 10,
-    aiJustification: "Flawless application of Lagrange multipliers. All steps correct. Minimum correctly identified. Boundary analysis complete.",
-    rubricMatch: [
-      { name: "Lagrangian setup", awarded: 3, max: 3, status: "full" },
-      { name: "System solution", awarded: 3, max: 3, status: "full" },
-      { name: "Extremum classification", awarded: 2, max: 2, status: "full" },
-      { name: "Boundary analysis", awarded: 2, max: 2, status: "full" },
-    ],
-    confidence: 98, status: "completed", timeAgo: "15 min ago", similarityFlag: null,
-  },
-];
 
 // Helpers
 const confidenceColor = (c) => c >= 80 ? T.emerald : c >= 60 ? "#f59e0b" : T.red;
-const confidenceBg    = (c) => c >= 80 ? T.emeraldDim : c >= 60 ? "rgba(245,158,11,0.10)" : "rgba(248,113,113,0.10)";
+const confidenceBg = (c) => c >= 80 ? T.emeraldDim : c >= 60 ? "rgba(245,158,11,0.10)" : "rgba(248,113,113,0.10)";
 const statusColor = { pending: T.text2, flagged: "#f59e0b", completed: T.emerald };
 const statusLabel = { pending: "Pending", flagged: "Flagged", completed: "Done" };
 const matchColors = { full: T.emerald, partial: "#f59e0b", none: T.red };
@@ -214,11 +109,11 @@ function Section({ label, title, children }) {
 const sectionTransition = {
   initial: { opacity: 0, y: 14 },
   animate: { opacity: 1, y: 0, transition: { ...SPRING_LG } },
-  exit:    { opacity: 0, y: -10, transition: { duration: 0.18 } },
+  exit: { opacity: 0, y: -10, transition: { duration: 0.18 } },
 };
 
 const rowStagger = { hidden: {}, visible: { transition: { staggerChildren: 0.04 } } };
-const rowItem    = { hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { ...SPRING } } };
+const rowItem = { hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { ...SPRING } } };
 
 function SectionProgress({ items, sessionStatuses }) {
   const inProgress = items.filter((i) => (sessionStatuses[i.id] || i.status) === "pending");
@@ -226,7 +121,7 @@ function SectionProgress({ items, sessionStatuses }) {
     <motion.div key="progress" {...sectionTransition}>
       {inProgress.length === 0 ? (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 320, gap: 16 }}>
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="18" stroke={T.text3} strokeWidth="1.5"/><path d="M24 16v8l5 3" stroke={T.text3} strokeWidth="1.5" strokeLinecap="round"/></svg>
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="18" stroke={T.text3} strokeWidth="1.5" /><path d="M24 16v8l5 3" stroke={T.text3} strokeWidth="1.5" strokeLinecap="round" /></svg>
           <div style={{ fontSize: 14, color: T.text3, textAlign: "center" }}>No scripts currently in progress</div>
         </div>
       ) : (
@@ -240,10 +135,12 @@ function SectionProgress({ items, sessionStatuses }) {
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
                 <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: T.text3 }}>{item.timeAgo}</span>
-                <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, fontWeight: 700,
+                <span style={{
+                  fontFamily: "Geist Mono, monospace", fontSize: 11, fontWeight: 700,
                   color: item.confidence >= 80 ? T.emerald : item.confidence >= 60 ? "#f59e0b" : T.red,
                   backgroundColor: item.confidence >= 80 ? T.emeraldDim : item.confidence >= 60 ? "rgba(245,158,11,0.10)" : "rgba(248,113,113,0.10)",
-                  borderRadius: 4, padding: "2px 8px" }}>{item.confidence}%</span>
+                  borderRadius: 4, padding: "2px 8px"
+                }}>{item.confidence}%</span>
               </div>
             </motion.div>
           ))}
@@ -259,7 +156,7 @@ function SectionCompleted({ items, sessionStatuses }) {
     <motion.div key="completed" {...sectionTransition}>
       {done.length === 0 ? (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 320, gap: 16 }}>
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="18" stroke={T.text3} strokeWidth="1.5"/><polyline points="16 24 21 29 32 18" stroke={T.text3} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="18" stroke={T.text3} strokeWidth="1.5" /><polyline points="16 24 21 29 32 18" stroke={T.text3} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
           <div style={{ fontSize: 14, color: T.text3, textAlign: "center" }}>No completed reviews yet this session</div>
         </div>
       ) : (
@@ -267,7 +164,7 @@ function SectionCompleted({ items, sessionStatuses }) {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>
-                {["Student ID","Question","AI Score","Your Decision","Confidence"].map((h) => (
+                {["Student ID", "Question", "AI Score", "Your Decision", "Confidence"].map((h) => (
                   <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: T.text3, fontFamily: "Geist Mono, monospace", borderBottom: `1px solid ${T.border}`, whiteSpace: "nowrap" }}>{h}</th>
                 ))}
               </tr>
@@ -281,8 +178,10 @@ function SectionCompleted({ items, sessionStatuses }) {
                   <td style={{ padding: "13px 20px" }}>
                     <span style={{ fontSize: 11, fontWeight: 600, fontFamily: "Geist Mono, monospace", color: T.emerald, backgroundColor: T.emeraldDim, border: `1px solid rgba(52,211,153,0.18)`, borderRadius: 5, padding: "2px 8px" }}>APPROVED</span>
                   </td>
-                  <td style={{ padding: "13px 20px", fontFamily: "Geist Mono, monospace", fontSize: 12,
-                    color: item.confidence >= 80 ? T.emerald : item.confidence >= 60 ? "#f59e0b" : T.red }}>{item.confidence}%</td>
+                  <td style={{
+                    padding: "13px 20px", fontFamily: "Geist Mono, monospace", fontSize: 12,
+                    color: item.confidence >= 80 ? T.emerald : item.confidence >= 60 ? "#f59e0b" : T.red
+                  }}>{item.confidence}%</td>
                 </motion.tr>
               ))}
             </motion.tbody>
@@ -299,7 +198,7 @@ function SectionFlagged({ items, sessionStatuses }) {
     <motion.div key="flagged" {...sectionTransition}>
       {flagged.length === 0 ? (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 320, gap: 16 }}>
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><path d="M12 40V14s4-4 12-4 12 4 12 4v16s-4-4-12-4-12 4-12 4" stroke={T.text3} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><path d="M12 40V14s4-4 12-4 12 4 12 4v16s-4-4-12-4-12 4-12 4" stroke={T.text3} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
           <div style={{ fontSize: 14, color: T.text3, textAlign: "center" }}>No flagged scripts this session</div>
         </div>
       ) : (
@@ -330,18 +229,21 @@ function SectionFlagged({ items, sessionStatuses }) {
 // Main Component
 export default function TADashboard() {
   const navigate = useNavigate();
-  const [activeRoute,      setActiveRoute]      = useState("/ta");
-  const [selectedId,       setSelectedId]       = useState(null);
-  const [filter,           setFilter]           = useState("All");
-  const [sessionStatuses,  setSessionStatuses]  = useState({});
-  const [overrideOpen,     setOverrideOpen]     = useState(false);
-  const [overrideScore,    setOverrideScore]    = useState("");
-  const [overrideReason,   setOverrideReason]   = useState("");
-  const [loading,          setLoading]          = useState(null);
-  const [toast,            setToast]            = useState(null);
-  const [sessionReviewed,  setSessionReviewed]  = useState(0);
-  const [contentKey,       setContentKey]       = useState(0);
-  const [screenW,          setScreenW]          = useState(typeof window !== "undefined" ? window.innerWidth : 1280);
+  const examId = 2;
+  const [queue, setQueue] = useState([]);
+  const [loadingData, setLoadingData] = useState(true);
+  const [activeRoute, setActiveRoute] = useState("/ta");
+  const [selectedId, setSelectedId] = useState(null);
+  const [filter, setFilter] = useState("All");
+  const [sessionStatuses, setSessionStatuses] = useState({});
+  const [overrideOpen, setOverrideOpen] = useState(false);
+  const [overrideScore, setOverrideScore] = useState("");
+  const [overrideReason, setOverrideReason] = useState("");
+  const [loading, setLoading] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [sessionReviewed, setSessionReviewed] = useState(0);
+  const [contentKey, setContentKey] = useState(0);
+  const [screenW, setScreenW] = useState(typeof window !== "undefined" ? window.innerWidth : 1280);
 
   useEffect(() => {
     const h = () => setScreenW(window.innerWidth);
@@ -349,20 +251,37 @@ export default function TADashboard() {
     return () => window.removeEventListener("resize", h);
   }, []);
 
-  const isMobile   = screenW < 768;
-  const isTablet   = screenW >= 768 && screenW < 1024;
-  const sidebarW   = isMobile ? 0 : isTablet ? 60 : 220;
+  useEffect(() => {
+    const fetchQueue = async () => {
+      try {
+        const res = await api.get(`/exams/${examId}/queue`);
+        setQueue(res.data.queue);
+        if (res.data.queue.length > 0) {
+          setSelectedId(res.data.queue[0].id);
+        }
+      } catch (err) {
+        console.error("Failed to load queue", err);
+      } finally {
+        setLoadingData(false);
+      }
+    };
+    fetchQueue();
+  }, [examId]);
 
-  const filteredQueue = MOCK_QUEUE.filter((item) => {
+  const isMobile = screenW < 768;
+  const isTablet = screenW >= 768 && screenW < 1024;
+  const sidebarW = isMobile ? 0 : isTablet ? 60 : 220;
+
+  const filteredQueue = queue.filter((item) => {
     const liveStatus = sessionStatuses[item.id] || item.status;
     if (filter === "All") return true;
     return liveStatus.toLowerCase() === filter.toLowerCase();
   });
 
-  const selectedItem  = MOCK_QUEUE.find((i) => i.id === selectedId) ?? null;
+  const selectedItem = queue.find((i) => i.id === selectedId) ?? null;
   const selectedIndex = filteredQueue.findIndex((i) => i.id === selectedId);
-  const totalVisible  = filteredQueue.length;
-  const totalSession  = MOCK_QUEUE.length;
+  const totalVisible = filteredQueue.length;
+  const totalSession = queue.length;
 
   const selectItem = useCallback((item) => {
     setSelectedId(item.id);
@@ -373,13 +292,13 @@ export default function TADashboard() {
   }, []);
 
   const nextItem = useCallback(() => {
-    const idx  = filteredQueue.findIndex((i) => i.id === selectedId);
+    const idx = filteredQueue.findIndex((i) => i.id === selectedId);
     const next = filteredQueue[idx + 1];
     if (next) selectItem(next);
   }, [filteredQueue, selectedId, selectItem]);
 
   const prevItem = useCallback(() => {
-    const idx  = filteredQueue.findIndex((i) => i.id === selectedId);
+    const idx = filteredQueue.findIndex((i) => i.id === selectedId);
     const prev = filteredQueue[idx - 1];
     if (prev) selectItem(prev);
   }, [filteredQueue, selectedId, selectItem]);
@@ -388,19 +307,56 @@ export default function TADashboard() {
     if (!selectedItem || loading) return;
     setLoading(type);
     await new Promise((r) => setTimeout(r, 600));
+
+    const newStatus = type === "flag" ? "flagged" : "completed";
+
+   const updatedQueue = queue.map((q) => {
+      if (q.id === selectedItem.id) {
+        if (type === "override") {
+          return {
+            ...q,
+            aiScore: Number(overrideScore),
+            status: newStatus,
+            aiJustification: `[TA OVERRIDE]: ${overrideReason}`,
+          };
+        }
+        return { ...q, status: newStatus };
+      }
+      return q;
+    });
+
+    setQueue(updatedQueue);
+
+    const newSessionStatuses = { ...sessionStatuses, [selectedItem.id]: newStatus };
+    setSessionStatuses(newSessionStatuses);
+
     setLoading(null);
-    setSessionStatuses((prev) => ({
-      ...prev,
-      [selectedItem.id]: type === "flag" ? "flagged" : "completed",
-    }));
     setSessionReviewed((n) => n + 1);
-    setToast(type === "approve" ? "Decision approved — moving to next item" : type === "override" ? "Override saved — moving to next item" : "Flagged for senior review");
+    setToast("Decision saved — moving to next item");
     setOverrideOpen(false);
+
+    const targetSubId = selectedItem.submission_id;
+    const studentQuestions = updatedQueue.filter(q => q.submission_id === targetSubId);
+
+    const allGraded = studentQuestions.every(
+      q => newSessionStatuses[q.id] === "completed" || newSessionStatuses[q.id] === "flagged"
+    );
+
+    if (allGraded) {
+      try {
+        await api.post(`/upload/${targetSubId}/review`, { questions: studentQuestions });
+        console.log(`Successfully finalized submission ${targetSubId}`);
+      } catch (err) {
+        console.error("Failed to finalize submission", err);
+      }
+    }
+    // ---------------------------------------------------------
+
     setTimeout(() => nextItem(), 800);
-  }, [selectedItem, loading, nextItem]);
+  }, [selectedItem, loading, nextItem, overrideScore, overrideReason, queue, sessionStatuses]);
 
   const handleApprove = useCallback(() => handleAction("approve"), [handleAction]);
-  const handleFlag    = useCallback(() => handleAction("flag"),    [handleAction]);
+  const handleFlag = useCallback(() => handleAction("flag"), [handleAction]);
 
   const handleOverrideSubmit = useCallback(() => {
     if (!overrideReason.trim()) return;
@@ -420,7 +376,7 @@ export default function TADashboard() {
       if (e.key === "o" || e.key === "O") toggleOverride();
       if (e.key === "f" || e.key === "F") handleFlag();
       if (e.key === "ArrowRight") nextItem();
-      if (e.key === "ArrowLeft")  prevItem();
+      if (e.key === "ArrowLeft") prevItem();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -472,7 +428,7 @@ export default function TADashboard() {
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                     <span style={{ fontSize: 14, fontWeight: 600, color: T.text1, letterSpacing: "-0.01em" }}>Review Queue</span>
                     <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, fontWeight: 700, color: T.cyan, background: T.cyanDim, borderRadius: 5, padding: "3px 8px" }}>
-                      {MOCK_QUEUE.filter((i) => (sessionStatuses[i.id] || i.status) === "pending").length} pending
+                      {queue.filter((i) => (sessionStatuses[i.id] || i.status) === "pending").length} pending
                     </span>
                   </div>
                   <div style={{ display: "flex", gap: 4, background: T.bg, borderRadius: 8, padding: 3 }}>
@@ -637,13 +593,13 @@ export default function TADashboard() {
                                 {loading === "approve" || (overrideOpen && loading === "override") ? <LoadingSpinner /> : overrideOpen ? "Submit Override" : "Approve"}
                               </MagBtn>
                               {!overrideOpen && <MagBtn variant="white" size="md" onClick={toggleOverride}>Override</MagBtn>}
-                              {overrideOpen  && <MagBtn variant="ghost" size="md" onClick={toggleOverride}>Cancel</MagBtn>}
+                              {overrideOpen && <MagBtn variant="ghost" size="md" onClick={toggleOverride}>Cancel</MagBtn>}
                               <MagBtn variant="danger" size="md" onClick={handleFlag}>
                                 {loading === "flag" ? <LoadingSpinner /> : "Flag for Review"}
                               </MagBtn>
                             </div>
                             <div style={{ marginTop: 12, fontFamily: "Geist Mono, monospace", fontSize: 11, color: T.text3, display: "flex", gap: 16, flexWrap: "wrap" }}>
-                              {[["A","Approve"],["O","Override"],["F","Flag"],["→","Next"],["←","Prev"]].map(([key, label]) => (
+                              {[["A", "Approve"], ["O", "Override"], ["F", "Flag"], ["→", "Next"], ["←", "Prev"]].map(([key, label]) => (
                                 <span key={key}>
                                   <span style={{ border: `1px solid ${T.border}`, borderRadius: 4, padding: "1px 5px", fontSize: 10, color: T.text2, background: T.surface }}>{key}</span> {label}
                                 </span>
@@ -662,19 +618,19 @@ export default function TADashboard() {
 
           {PATH_TO_SECTION[activeRoute] === "progress" && (
             <div key="progress" style={{ flex: 1, overflowY: "auto", padding: 28 }}>
-              <SectionProgress items={MOCK_QUEUE} sessionStatuses={sessionStatuses} />
+              <SectionProgress items={queue} sessionStatuses={sessionStatuses} />
             </div>
           )}
 
           {PATH_TO_SECTION[activeRoute] === "completed" && (
             <div key="completed" style={{ flex: 1, overflowY: "auto", padding: 28 }}>
-              <SectionCompleted items={MOCK_QUEUE} sessionStatuses={sessionStatuses} />
+              <SectionCompleted items={queue} sessionStatuses={sessionStatuses} />
             </div>
           )}
 
           {PATH_TO_SECTION[activeRoute] === "flagged" && (
             <div key="flagged" style={{ flex: 1, overflowY: "auto", padding: 28 }}>
-              <SectionFlagged items={MOCK_QUEUE} sessionStatuses={sessionStatuses} />
+              <SectionFlagged items={queue} sessionStatuses={sessionStatuses} />
             </div>
           )}
         </AnimatePresence>
