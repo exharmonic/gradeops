@@ -239,21 +239,9 @@ function Hero({ onAuth }) {
             <span style={{ color: T.cyan, fontWeight: 500 }}>Vision-Language Models (VLMs)</span> and{" "}
             <span style={{ color: T.emerald, fontWeight: 500 }}>Agentic LLMs</span> to evaluate scanned exams against strict rubrics.
           </p>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", pointerEvents: "all", marginBottom: 56 }}>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", pointerEvents: "all" }}>
             <MagBtn onClick={onAuth} variant="primary" size="lg">Request access <Arrow /></MagBtn>
             <MagBtn variant="white" size="lg">View architecture</MagBtn>
-          </div>
-          <div style={{ display: "flex", gap: "clamp(32px,5vw,64px)", flexWrap: "wrap" }}>
-            {[
-              { v: "94.7%", l: "OCR extraction accuracy", c: T.cyan },
-              { v: "11×", l: "faster than manual grading", c: T.emerald },
-              { v: "2,400+", l: "exams processed in beta", c: T.text1 },
-            ].map(({ v, l, c }) => (
-              <div key={v}>
-                <div style={{ fontFamily: "Geist Mono, monospace", fontSize: "clamp(24px,3vw,36px)", fontWeight: 700, color: c, letterSpacing: "-0.035em", lineHeight: 1 }}>{v}</div>
-                <div style={{ fontSize: 12, color: T.text3, marginTop: 7 }}>{l}</div>
-              </div>
-            ))}
           </div>
         </HeroPanel>
       </section>
@@ -335,7 +323,7 @@ function UploadVisual() {
 
 function RBACVisual() {
   const roles = [
-    { name: "Dr. Adeyemi", tag: "Instructor", perms: ["Edit rubric", "Release grades", "Audit log"], c: T.cyan },
+    { name: "Dr. Adeyemi", tag: "Instructor", perms: ["Edit rubric"], c: T.cyan },
     { name: "Priya Krishnamurthy", tag: "TA", perms: ["Review queue", "Override"], c: T.emerald },
   ];
   return (
@@ -764,7 +752,7 @@ function Footer() {
           <span style={{ fontSize: 11, fontFamily: "Geist Mono, monospace", color: T.text3 }}>© 2025</span>
         </div>
         <div style={{ display: "flex", gap: 24 }}>
-          {["Privacy", "Terms", "Status", "Docs"].map(l => (
+          {[].map(l => (
             <a key={l} href="#" style={{ fontSize: 13, color: T.text3, textDecoration: "none", transition: "color 0.15s" }}
               onMouseEnter={e => e.target.style.color = T.text1} onMouseLeave={e => e.target.style.color = T.text3}>{l}</a>
           ))}
