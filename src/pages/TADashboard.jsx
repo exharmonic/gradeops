@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "../components/Sidebar";
 import { MagBtn, LoadingSpinner, Dot } from "../components/ui";
 import T, { SPRING, SPRING_LG, EASE_EXPO } from "../tokens";
 import api from "../services/api";
+import { UserContext } from "../context/UserContext";
 
 const PATH_TO_SECTION = {
   "/ta": "queue",
@@ -267,15 +268,26 @@ function ExamCard({ exam, onSelect }) {
   );
 }
 
-function ExamListView({ exams, loading, onSelect }) {
+function ExamListView({ exams, loading, onSelect, onLogout }) {
   return (
     <div style={{ minHeight: "100dvh", background: T.bg, fontFamily: "Geist, sans-serif", color: T.text1, display: "flex", flexDirection: "column" }}>
-      <div style={{ height: 64, display: "flex", alignItems: "center", gap: 10, padding: "0 32px", borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
-        <div style={{ width: 30, height: 30, borderRadius: 8, background: T.cyan, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 16px ${T.cyanGlow}` }}>
-          <span style={{ color: T.bg, fontSize: 16, fontWeight: 800, lineHeight: 1 }}>→</span>
+      <div style={{ height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px", borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: T.cyan, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 16px ${T.cyanGlow}` }}>
+            <span style={{ color: T.bg, fontSize: 16, fontWeight: 800, lineHeight: 1 }}>→</span>
+          </div>
+          <span style={{ fontSize: 16, fontWeight: 700, color: T.text1, letterSpacing: "-0.02em" }}>GradeOps</span>
+          <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 9, fontWeight: 700, color: T.cyan, background: T.cyanDim, borderRadius: 4, padding: "2px 6px", letterSpacing: "0.08em" }}>BETA</span>
         </div>
-        <span style={{ fontSize: 16, fontWeight: 700, color: T.text1, letterSpacing: "-0.02em" }}>GradeOps</span>
-        <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 9, fontWeight: 700, color: T.cyan, background: T.cyanDim, borderRadius: 4, padding: "2px 6px", letterSpacing: "0.08em" }}>BETA</span>
+        <button
+          onClick={onLogout}
+          onMouseEnter={(e) => { e.currentTarget.style.color = T.text1; e.currentTarget.style.borderColor = T.borderMid; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = T.text2; e.currentTarget.style.borderColor = T.border; }}
+          style={{ display: "flex", alignItems: "center", gap: 7, background: "transparent", border: `1px solid ${T.border}`, borderRadius: 7, cursor: "pointer", color: T.text2, fontFamily: "Geist Mono, monospace", fontSize: 12, padding: "7px 12px", transition: "color 0.15s, border-color 0.15s" }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+          Sign out
+        </button>
       </div>
       <div style={{ flex: 1, overflowY: "auto", padding: "40px 32px 56px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
@@ -308,6 +320,7 @@ function ExamListView({ exams, loading, onSelect }) {
 
 export default function TADashboard() {
   const navigate = useNavigate();
+  const { logout } = useContext(UserContext);
   const [exams, setExams] = useState([]);
   const [loadingExams, setLoadingExams] = useState(true);
   const [selectedExam, setSelectedExam] = useState(null);
@@ -491,6 +504,11 @@ export default function TADashboard() {
     setFilter("All");
   }, []);
 
+  const handleLogout = useCallback(() => {
+    logout();
+    navigate("/");
+  }, [logout, navigate]);
+
   useEffect(() => {
     const handler = (e) => {
       const tag = document.activeElement?.tagName?.toLowerCase();
@@ -514,7 +532,7 @@ export default function TADashboard() {
   const progressPct = totalSession > 0 ? (sessionReviewed / totalSession) * 100 : 0;
 
   if (!selectedExam) {
-    return <ExamListView exams={exams} loading={loadingExams} onSelect={openExam} />;
+    return <ExamListView exams={exams} loading={loadingExams} onSelect={openExam} onLogout={handleLogout} />;
   }
 
   return (
