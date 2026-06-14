@@ -112,7 +112,7 @@ function useBreakpoint() {
 
 async function get_exams() {
   try {
-    const response = await api.get('/exams')
+    const response = await api.get('/exams/')
     return response.data
   } catch (err) {
     console.log(err)

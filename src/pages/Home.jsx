@@ -591,7 +591,7 @@ function AuthSection({ id }) {
     setLLoading(true);
 
     try {
-      await api.post('/login', {
+      await api.post('/login/', {
         email: lem,
         password: lpw
       });
@@ -617,7 +617,7 @@ function AuthSection({ id }) {
     setRLoading(true);
 
     try {
-      const response = await api.post('/register', {
+      const response = await api.post('/register/', {
         email: rem,
         password: rpw,
         role: rol

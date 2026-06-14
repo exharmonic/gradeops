@@ -141,7 +141,7 @@ export default function Login() {
         setLoading(true);
 
         try {
-            await api.post('/login', {
+            await api.post('/login/', {
                 email: email,
                 password: password
             });
