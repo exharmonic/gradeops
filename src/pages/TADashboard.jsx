@@ -26,10 +26,6 @@ const statusColor = { pending: T.text2, flagged: "#f59e0b", completed: T.emerald
 const statusLabel = { pending: "Pending", flagged: "Flagged", completed: "Done" };
 const matchColors = { full: T.emerald, partial: "#f59e0b", none: T.red };
 
-const MOCK_QUEUE = [];
-
-const MOCK_EXAMS = [];
-
 const Toast = ({ message, onDone }) => {
   useEffect(() => {
     const t = setTimeout(onDone, 2500);
@@ -295,7 +291,7 @@ function ExamListView({ exams, loading, onSelect }) {
           ) : exams.length === 0 ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 280, gap: 16 }}>
               <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="8" y="6" width="32" height="36" rx="4" stroke={T.text3} strokeWidth="1.5" /><path d="M16 16h16M16 24h16M16 32h10" stroke={T.text3} strokeWidth="1.5" strokeLinecap="round" /></svg>
-              <div style={{ fontSize: 14, color: T.text3 }}>No exams available to grade</div>
+              <div style={{ fontSize: 14, color: T.text3 }}>No exams to grade</div>
             </div>
           ) : (
             <motion.div variants={rowStagger} initial="hidden" animate="visible" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
@@ -341,11 +337,10 @@ export default function TADashboard() {
       try {
         const res = await api.get(`/exams/to-grade`);
         const data = res?.data;
-        const next = Array.isArray(data) && data.length > 0 ? data : MOCK_EXAMS;
-        setExams(next);
+        setExams(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.warn("Failed to load exams, using mock data", err);
-        setExams(MOCK_EXAMS);
+        console.error("Failed to load exams", err);
+        setExams([]);
       } finally {
         setLoadingExams(false);
       }
@@ -364,15 +359,15 @@ export default function TADashboard() {
       try {
         const res = await api.get(`/exams/${selectedExam.id}/queue`);
         const data = res?.data?.queue;
-        const next = Array.isArray(data) && data.length > 0 ? data : MOCK_QUEUE;
+        const next = Array.isArray(data) ? data : [];
         if (cancelled) return;
         setQueue(next);
         setSelectedId(next.length > 0 ? next[0].id : null);
       } catch (err) {
-        console.warn("Failed to load queue, using mock data", err);
+        console.error("Failed to load queue", err);
         if (cancelled) return;
-        setQueue(MOCK_QUEUE);
-        setSelectedId(MOCK_QUEUE.length > 0 ? MOCK_QUEUE[0].id : null);
+        setQueue([]);
+        setSelectedId(null);
       } finally {
         if (!cancelled) setLoadingData(false);
       }
@@ -584,6 +579,14 @@ export default function TADashboard() {
               </div>
 
               <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden", background: T.bg }}>
+                <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: "10px 20px", display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
+                  <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: T.text3, whiteSpace: "nowrap" }}>Session progress</span>
+                  <div style={{ flex: 1, height: 2, background: T.border, borderRadius: 2, overflow: "hidden" }}>
+                    <motion.div animate={{ width: `${progressPct}%` }} transition={{ duration: 0.6, ease: EASE_EXPO }} style={{ height: "100%", background: T.cyan, boxShadow: `0 0 6px ${T.cyanGlow}`, borderRadius: 2 }} />
+                  </div>
+                  <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: T.text2, whiteSpace: "nowrap" }}>{sessionReviewed} / {totalSession} reviewed</span>
+                </div>
+
                 {!selectedItem ? (
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20 }}>
                     <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
