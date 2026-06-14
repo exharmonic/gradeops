@@ -7,9 +7,7 @@ import { UserContext } from "../context/UserContext";
 import Sidebar from "../components/Sidebar";
 import api from "../services/api";
 
-/* 
-   INLINE ICONS
- */
+
 const Ico = {
   Upload: () => (
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">

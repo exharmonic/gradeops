@@ -337,6 +337,8 @@ export default function TADashboard() {
   const [toast, setToast] = useState(null);
   const [sessionReviewed, setSessionReviewed] = useState(0);
   const [contentKey, setContentKey] = useState(0);
+  const [pages, setPages] = useState([]);
+  const [loadingPages, setLoadingPages] = useState(false);
   const [screenW, setScreenW] = useState(typeof window !== "undefined" ? window.innerWidth : 1280);
 
   useEffect(() => {
@@ -529,6 +531,32 @@ export default function TADashboard() {
     }
   }, [filter]);
 
+  useEffect(() => {
+    const subId = selectedItem?.submission_id;
+    if (!subId) {
+      setPages([]);
+      return;
+    }
+    let cancelled = false;
+    const fetchPages = async () => {
+      setLoadingPages(true);
+      try {
+        const res = await api.get(`/upload/${subId}/pages`);
+        const list = res?.data?.pages;
+        if (cancelled) return;
+        const base = api.defaults.baseURL || "";
+        setPages(Array.isArray(list) ? list.map((p) => `${base}${p}`) : []);
+      } catch (err) {
+        console.error("Failed to load script pages", err);
+        if (!cancelled) setPages([]);
+      } finally {
+        if (!cancelled) setLoadingPages(false);
+      }
+    };
+    fetchPages();
+    return () => { cancelled = true; };
+  }, [selectedItem?.submission_id]);
+
   if (!selectedExam) {
     return <ExamListView exams={exams} loading={loadingExams} onSelect={openExam} onLogout={handleLogout} />;
   }
@@ -650,13 +678,46 @@ export default function TADashboard() {
                           </Section>
 
                           <Section label="B" title="Student's Answer">
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                              <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 10, color: T.text3, letterSpacing: "0.1em", textTransform: "uppercase" }}>Extracted Answer</span>
-                              <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 10, fontWeight: 700, color: selectedItem.ocrConfidence >= 80 ? T.emerald : selectedItem.ocrConfidence >= 60 ? "#f59e0b" : T.red, background: selectedItem.ocrConfidence >= 80 ? T.emeraldDim : selectedItem.ocrConfidence >= 60 ? "rgba(245,158,11,0.10)" : "rgba(248,113,113,0.10)", borderRadius: 4, padding: "2px 7px" }}>OCR {selectedItem.ocrConfidence}%</span>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, alignItems: "start" }}>
+
+                              <div>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                                  <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 10, color: T.text3, letterSpacing: "0.1em", textTransform: "uppercase" }}>Original Script</span>
+                                  {pages.length > 1 && <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 10, color: T.text3 }}>{pages.length} pages</span>}
+                                </div>
+                                <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: 8, maxHeight: 460, overflowY: "auto", scrollbarWidth: "none" }}>
+                                  {loadingPages ? (
+                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 200, gap: 10, color: T.text3 }}>
+                                      <LoadingSpinner />
+                                      <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 12 }}>Loading script…</span>
+                                    </div>
+                                  ) : pages.length === 0 ? (
+                                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 200, gap: 10, color: T.text3, textAlign: "center", padding: 12 }}>
+                                      <svg width="40" height="40" viewBox="0 0 48 48" fill="none"><rect x="10" y="6" width="28" height="36" rx="4" stroke={T.text3} strokeWidth="1.5" /><path d="M17 16h14M17 24h14M17 32h9" stroke={T.text3} strokeWidth="1.5" strokeLinecap="round" /></svg>
+                                      <span style={{ fontSize: 12 }}>Original script unavailable</span>
+                                    </div>
+                                  ) : (
+                                    pages.map((url, idx) => (
+                                      <a key={url} href={url} target="_blank" rel="noreferrer" style={{ display: "block", marginBottom: idx < pages.length - 1 ? 8 : 0 }}>
+                                        <img src={url} alt={`Script page ${idx + 1}`} loading="lazy" style={{ width: "100%", display: "block", borderRadius: 6, border: `1px solid ${T.border}`, background: "#ffffff" }} />
+                                      </a>
+                                    ))
+                                  )}
+                                </div>
+                                {pages.length > 0 && <div style={{ fontFamily: "Geist Mono, monospace", fontSize: 10, color: T.text3, marginTop: 6 }}>Click a page to open full size</div>}
+                              </div>
+
+                              <div>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                                  <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 10, color: T.text3, letterSpacing: "0.1em", textTransform: "uppercase" }}>Extracted Answer</span>
+                                  <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 10, fontWeight: 700, color: selectedItem.ocrConfidence >= 80 ? T.emerald : selectedItem.ocrConfidence >= 60 ? "#f59e0b" : T.red, background: selectedItem.ocrConfidence >= 80 ? T.emeraldDim : selectedItem.ocrConfidence >= 60 ? "rgba(245,158,11,0.10)" : "rgba(248,113,113,0.10)", borderRadius: 4, padding: "2px 7px" }}>OCR {selectedItem.ocrConfidence}%</span>
+                                </div>
+                                <pre style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: 14, fontFamily: "Geist Mono, monospace", fontSize: 12, color: T.text1, lineHeight: 1.7, whiteSpace: "pre-wrap", margin: 0 }}>
+                                  {selectedItem.ocrText}
+                                </pre>
+                              </div>
+
                             </div>
-                            <pre style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: 14, fontFamily: "Geist Mono, monospace", fontSize: 12, color: T.text1, lineHeight: 1.7, whiteSpace: "pre-wrap", margin: 0 }}>
-                              {selectedItem.ocrText}
-                            </pre>
                           </Section>
 
                           <Section label="C" title="AI Grading Decision">
