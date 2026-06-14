@@ -106,9 +106,6 @@ function useBreakpoint() {
   return { isMobile: w < 768, isTablet: w >= 768 && w < 1024 };
 }
 
-/* 
-   MOCK DATA
- */
 
 async function get_exams() {
   try {
@@ -121,6 +118,9 @@ async function get_exams() {
 
 }
 
+/* 
+   MOCK DATA
+ */
 const MOCK_GRADES = [];
 
 const RUBRIC_PLACEHOLDER = `{
@@ -186,7 +186,7 @@ const StatusBadge = ({ status }) => {
     released: { color: T.text3, bg: "rgba(69,85,95,0.15)", border: T.border },
   };
   const s = map[status] || map["released"];
-  
+
   const displayStatus = status.replace("_", " ").toUpperCase();
 
   return (
@@ -254,13 +254,6 @@ function StatCard({ label, value, trend, trendUp, accent }) {
       </div>
       <div style={{ fontFamily: "Geist Mono, monospace", fontWeight: 700, fontSize: "clamp(28px,3vw,40px)", color: accent || T.text1, letterSpacing: "-0.03em", lineHeight: 1, marginBottom: "10px" }}>
         {displayed.toLocaleString()}
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-        <Ico.Trend up={trendUp} />
-        <span style={{ fontSize: "12px", color: trendUp ? T.emerald : T.red, fontFamily: "Geist Mono, monospace" }}>
-          {trend}
-        </span>
-        <span style={{ fontSize: "12px", color: T.text3 }}>vs last week</span>
       </div>
     </motion.div>
   );
@@ -538,7 +531,7 @@ function SectionExams({ exams, onUploadSuccess }) {
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "24px", alignItems: "start" }}>
 
-          {/* LEFT COLUMN */} 
+          {/* LEFT COLUMN */}
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
 
             {/* Stats row */}
@@ -864,7 +857,7 @@ function SectionGrades() {
   const [grades, setGrades] = useState([])
   const [loadingGrades, setLoadingGrades] = useState(false)
 
-const fetchGrades = useCallback(async () => {
+  const fetchGrades = useCallback(async () => {
     if (!user) return;
     try {
       setLoadingGrades(true);
