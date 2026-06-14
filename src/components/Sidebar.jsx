@@ -95,7 +95,6 @@ const TA_NAV = [
   { label: "Review Queue", icon: Icons.Inbox, path: "/ta" },
   { label: "In Progress", icon: Icons.Spinner, path: "/ta/progress" },
   { label: "Completed", icon: Icons.CheckCircle, path: "/ta/completed" },
-  { label: "Flagged", icon: Icons.Flag, path: "/ta/flagged" },
 ];
 
 /* 

@@ -517,7 +517,6 @@ export default function TADashboard() {
       if (tag === "input" || tag === "textarea") return;
       if (e.key === "a" || e.key === "A") handleApprove();
       if (e.key === "o" || e.key === "O") toggleOverride();
-      if (e.key === "f" || e.key === "F") handleFlag();
       if (e.key === "ArrowRight") nextItem();
       if (e.key === "ArrowLeft") prevItem();
     };
@@ -606,7 +605,7 @@ export default function TADashboard() {
                     </span>
                   </div>
                   <div style={{ display: "flex", gap: 4, background: T.bg, borderRadius: 8, padding: 3 }}>
-                    {["All", "Pending", "Flagged", "Completed"].map((tab) => (
+                    {["All", "Pending", "Completed"].map((tab) => (
                       <button key={tab} onClick={() => setFilter(tab)} style={{ flex: 1, padding: "5px 0", fontSize: 11, fontFamily: "Geist Mono, monospace", fontWeight: 600, border: "none", borderRadius: 6, cursor: "pointer", background: filter === tab ? T.cyanDim : "transparent", color: filter === tab ? T.cyan : T.text3, transition: "all 0.15s" }}>
                         {tab}
                       </button>
@@ -793,12 +792,9 @@ export default function TADashboard() {
                               </MagBtn>
                               {!overrideOpen && <MagBtn variant="white" size="md" onClick={toggleOverride}>Override</MagBtn>}
                               {overrideOpen && <MagBtn variant="ghost" size="md" onClick={toggleOverride}>Cancel</MagBtn>}
-                              <MagBtn variant="danger" size="md" onClick={handleFlag}>
-                                {loading === "flag" ? <LoadingSpinner /> : "Flag for Review"}
-                              </MagBtn>
                             </div>
                             <div style={{ marginTop: 12, fontFamily: "Geist Mono, monospace", fontSize: 11, color: T.text3, display: "flex", gap: 16, flexWrap: "wrap" }}>
-                              {[["A", "Approve"], ["O", "Override"], ["F", "Flag"], ["→", "Next"], ["←", "Prev"]].map(([key, label]) => (
+                              {[["A", "Approve"], ["O", "Override"], ["→", "Next"], ["←", "Prev"]].map(([key, label]) => (
                                 <span key={key}>
                                   <span style={{ border: `1px solid ${T.border}`, borderRadius: 4, padding: "1px 5px", fontSize: 10, color: T.text2, background: T.surface }}>{key}</span> {label}
                                 </span>

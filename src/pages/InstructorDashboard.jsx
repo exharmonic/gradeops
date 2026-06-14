@@ -216,7 +216,7 @@ function SectionOverview({ exams }) {
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", marginBottom: "32px" }}
       >
         <StatCard label="Total Exams" value={exams.length} />
-        <StatCard label="Exams Graded" value={exams.reduce((acc, curr) => acc + curr.graded, 0)} />
+        <StatCard label="Scripts Graded" value={exams.reduce((acc, curr) => acc + curr.graded, 0)} />
         <StatCard label="Pending Review" value={exams.filter(exam => exam.status === "in_review").length} accent={T.cyan} />
         <StatCard label="Flagged" value={0} accent={T.red} />
       </motion.div>
