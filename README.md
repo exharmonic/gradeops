@@ -1,16 +1,37 @@
-# React + Vite
+# GradeOps Frontend: Secure RBAC Portals for Instructors & TAs
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**GradeOps Frontend** is the user-interface for the GradeOps AI grading engine. Built with React, it empowers Instructors to manage complex exam rubrics and enables Teaching Assistants (TAs) to seamlessly interface with AI-generated evaluations through a Human-in-the-Loop (HITL) review system.
 
-Currently, two official plugins are available:
+*Note: This repository contains the React UI and client-side logic. For the FastAPI AI orchestration engine, please visit the [GradeOps Backend Repository](https://github.com/exharmonic/grade-ops).*
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Core Features
 
-## React Compiler
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+
+---
+
+### 1. Clone the Repo
+Open your terminal and clone the repo to your local machine:
+```bash
+git clone https://github.com/exharmonic/gradeops-frontend
+cd gradeops-frontend
+```
+
+### 2. Install dependencies
+Ensure that you have [node.js](https://nodejs.org/en) installed, then execute:
+```bash
+npm install
+```
+### 3. Run the development server
+Start the Vite development server:
+```bash
+npm run dev
+```
+The server will start on http://127.0.0.1:5173
+
+### 4. Backend server requirement
+To fully test authentication, file uploads, and the grading pipeline locally, ensure that your **GradeOps Backend** is running simultaneously on http://127.0.0.1:8000.
