@@ -9,8 +9,8 @@ from ai_engine.graph import builder
 from app.database import SessionLocal
 import app.models as models
 
-embeddings_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-evaluator_llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.0)
+embeddings_model = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
+evaluator_llm = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite", temperature=0.0)
 
 
 class PlagiarismDecision(BaseModel):

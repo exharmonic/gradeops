@@ -8,6 +8,7 @@ from fastapi import (
     status,
     BackgroundTasks,
 )
+from fastapi.responses import FileResponse
 import app.models as models
 from app.auth import get_current_user
 from app.database import SessionLocal
@@ -20,7 +21,7 @@ from langgraph.types import Command
 import app.schemas as schemas
 from ai_engine.plagiarism import run_batch_plagiarism_check
 import os, shutil, re, pymupdf
-import json, asyncio
+import json
 
 db_dependency = Annotated[Session, Depends(get_db)]
 user_dependency = Annotated[models.User, Depends(get_current_user)]
@@ -88,6 +89,8 @@ def upload_files(
                     os.remove(existing_submission.pdf_path)
                 db.delete(existing_submission)
                 db.flush()
+            else:
+                net_new_students_count += 1
 
             new_submission = models.Submission(
                 student_roll_no=student_id,
@@ -148,7 +151,15 @@ def upload_files(
 
 
 @router.get("/{submission_id}/review")
-async def get_human_review_data(submission_id: int, db: Session = Depends(get_db)):
+async def get_human_review_data(
+    submission_id: int, current_user: user_dependency, db: Session = Depends(get_db)
+):
+
+    if current_user.role != "ta":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Only TAs can reviews answer scripts",
+        )
 
     submission = (
         db.query(models.Submission)
@@ -184,10 +195,66 @@ async def get_human_review_data(submission_id: int, db: Session = Depends(get_db
     return {"submission_id": submission.id, "ai_review_data": ui_payload}
 
 
+def _sorted_page_files(images_path: str):
+    if not images_path or not os.path.isdir(images_path):
+        return []
+    files = [f for f in os.listdir(images_path) if f.lower().endswith(".png")]
+    return sorted(files, key=lambda n: int(re.sub(r"\D", "", n) or 0))
+
+
+@router.get("/{submission_id}/pages")
+def list_submission_pages(submission_id: int, db: db_dependency):
+    submission = (
+        db.query(models.Submission)
+        .filter(models.Submission.id == submission_id)
+        .first()
+    )
+    if not submission:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found"
+        )
+
+    files = _sorted_page_files(submission.images_path)
+    return {"pages": [f"/upload/{submission_id}/page/{i}" for i in range(len(files))]}
+
+
+@router.get("/{submission_id}/page/{page_no}")
+def get_submission_page(submission_id: int, page_no: int, db: db_dependency):
+    submission = (
+        db.query(models.Submission)
+        .filter(models.Submission.id == submission_id)
+        .first()
+    )
+    if not submission:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found"
+        )
+
+    files = _sorted_page_files(submission.images_path)
+    if page_no < 0 or page_no >= len(files):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Page not found"
+        )
+
+    return FileResponse(
+        os.path.join(submission.images_path, files[page_no]), media_type="image/png"
+    )
+
+
 @router.post("/{submission_id}/review")
 async def submit_human_review(
-    submission_id: int, payload: schemas.TAReviewSubmit, db: db_dependency
+    submission_id: int,
+    current_user: user_dependency,
+    payload: schemas.TAReviewSubmit,
+    db: db_dependency,
 ):
+
+    if current_user.role != "ta":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Only TAs can reviews answer scripts",
+        )
+
     submission = (
         db.query(models.Submission)
         .filter(models.Submission.id == submission_id)
@@ -344,7 +411,7 @@ async def execute_grading_pipeline(submission_id: int):
                 f"All scripts for Exam {submission.exam_id} have finished processing!"
             )
             print("Automatically triggering batch plagiarism check...")
-            asyncio.create_task(run_batch_plagiarism_check(submission.exam_id))
+            await run_batch_plagiarism_check(submission.exam_id)
 
     except Exception as e:
         print(f"Pipeline error: {e}")
