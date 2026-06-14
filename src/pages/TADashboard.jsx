@@ -6,7 +6,6 @@ import { MagBtn, LoadingSpinner, Dot } from "../components/ui";
 import T, { SPRING, SPRING_LG, EASE_EXPO } from "../tokens";
 import api from "../services/api";
 
-// Section routing
 const PATH_TO_SECTION = {
   "/ta": "queue",
   "/ta/progress": "progress",
@@ -21,14 +20,173 @@ const SECTION_META = {
   flagged: { title: "Flagged", sub: "Scripts flagged for senior review" },
 };
 
-// Helpers
 const confidenceColor = (c) => c >= 80 ? T.emerald : c >= 60 ? "#f59e0b" : T.red;
 const confidenceBg = (c) => c >= 80 ? T.emeraldDim : c >= 60 ? "rgba(245,158,11,0.10)" : "rgba(248,113,113,0.10)";
 const statusColor = { pending: T.text2, flagged: "#f59e0b", completed: T.emerald };
 const statusLabel = { pending: "Pending", flagged: "Flagged", completed: "Done" };
 const matchColors = { full: T.emerald, partial: "#f59e0b", none: T.red };
 
-// Toast
+const MOCK_QUEUE = [
+  {
+    id: 1,
+    submission_id: 201,
+    studentId: "STU-0041",
+    questionRef: "Q1",
+    questionText: "Q1: Evaluate the definite integral of x·eˣ from 0 to 1 using integration by parts.",
+    status: "pending",
+    timeAgo: "2m ago",
+    confidence: 91,
+    aiScore: 6,
+    maxScore: 7,
+    ocrConfidence: 94,
+    ocrText: "∫₀¹ x eˣ dx\nu = x,  dv = eˣ dx\ndu = dx,  v = eˣ\n= [x eˣ]₀¹ − ∫₀¹ eˣ dx\n= e − [eˣ]₀¹\n= e − (e − 1) = 1",
+    aiJustification: "Parts assignment and the formula are applied correctly, and the final value of 1 is right. The boundary substitution at the lower limit was not stated explicitly, so one point is withheld.",
+    rubric: [
+      { name: "Correct choice of u and dv", maxPoints: 2, keywords: ["u = x", "dv = eˣ"] },
+      { name: "Apply IBP formula", maxPoints: 3, keywords: ["uv", "∫ v du"] },
+      { name: "Final evaluation", maxPoints: 2, keywords: ["= 1"] },
+    ],
+    rubricMatch: [
+      { name: "Correct choice of u and dv", awarded: 2, max: 2, status: "full" },
+      { name: "Apply IBP formula", awarded: 3, max: 3, status: "full" },
+      { name: "Final evaluation", awarded: 1, max: 2, status: "partial" },
+    ],
+  },
+  {
+    id: 2,
+    submission_id: 201,
+    studentId: "STU-0041",
+    questionRef: "Q2",
+    questionText: "Q2: Find the eigenvalues of the matrix [[2, 1], [1, 2]] and state one corresponding eigenvector.",
+    status: "pending",
+    timeAgo: "2m ago",
+    confidence: 73,
+    aiScore: 4,
+    maxScore: 6,
+    ocrConfidence: 81,
+    ocrText: "det(A − λI) = 0\n(2−λ)² − 1 = 0\nλ² − 4λ + 3 = 0\n(λ−1)(λ−3) = 0\nλ = 1, 3\nfor λ = 3:  x = y  →  v = (1, 1)",
+    aiJustification: "Characteristic polynomial and both eigenvalues are correct. One valid eigenvector is given as requested, but partial work suggests a second eigenvector was intended and left incomplete.",
+    rubric: [
+      { name: "Characteristic equation", maxPoints: 2, keywords: ["det(A − λI)", "λ² − 4λ + 3"] },
+      { name: "Eigenvalues", maxPoints: 2, keywords: ["λ = 1", "λ = 3"] },
+      { name: "Eigenvector", maxPoints: 2, keywords: ["(1, 1)"] },
+    ],
+    rubricMatch: [
+      { name: "Characteristic equation", awarded: 2, max: 2, status: "full" },
+      { name: "Eigenvalues", awarded: 2, max: 2, status: "full" },
+      { name: "Eigenvector", awarded: 0, max: 2, status: "none" },
+    ],
+    similarityFlag: { count: 3, papers: ["STU-0082", "STU-0119", "STU-0204"] },
+  },
+  {
+    id: 3,
+    submission_id: 201,
+    studentId: "STU-0041",
+    questionRef: "Q3",
+    questionText: "Q3: Determine whether the series sum of 1/(n·ln n) from n = 2 to infinity converges, with justification.",
+    status: "pending",
+    timeAgo: "3m ago",
+    confidence: 58,
+    aiScore: 3,
+    maxScore: 8,
+    ocrConfidence: 67,
+    ocrText: "aₙ = 1/(n ln n)\nratio test → limit = 1 (inconclusive)\nintegral test: ∫ dx/(x ln x) = ln(ln x)\n→ diverges?",
+    aiJustification: "Correctly identifies the integral test as the right tool and computes the antiderivative ln(ln x). The final conclusion is incomplete and the divergence claim is not justified, so most of the reasoning credit is withheld.",
+    rubric: [
+      { name: "Select valid test", maxPoints: 2, keywords: ["integral test"] },
+      { name: "Evaluate integral", maxPoints: 3, keywords: ["ln(ln x)"] },
+      { name: "Conclusion + justification", maxPoints: 3, keywords: ["diverges"] },
+    ],
+    rubricMatch: [
+      { name: "Select valid test", awarded: 2, max: 2, status: "full" },
+      { name: "Evaluate integral", awarded: 1, max: 3, status: "partial" },
+      { name: "Conclusion + justification", awarded: 0, max: 3, status: "none" },
+    ],
+  },
+  {
+    id: 4,
+    submission_id: 202,
+    studentId: "STU-0082",
+    questionRef: "Q1",
+    questionText: "Q1: Evaluate the definite integral of x·eˣ from 0 to 1 using integration by parts.",
+    status: "pending",
+    timeAgo: "5m ago",
+    confidence: 96,
+    aiScore: 7,
+    maxScore: 7,
+    ocrConfidence: 97,
+    ocrText: "∫₀¹ x eˣ dx,  by parts\nu = x ⇒ du = dx\ndv = eˣ dx ⇒ v = eˣ\n= [x eˣ]₀¹ − ∫₀¹ eˣ dx\n= e − (e − 1)\n= 1",
+    aiJustification: "Complete and correct solution with every step shown, including the boundary evaluation. Full marks awarded.",
+    rubric: [
+      { name: "Correct choice of u and dv", maxPoints: 2, keywords: ["u = x", "dv = eˣ"] },
+      { name: "Apply IBP formula", maxPoints: 3, keywords: ["uv", "∫ v du"] },
+      { name: "Final evaluation", maxPoints: 2, keywords: ["= 1"] },
+    ],
+    rubricMatch: [
+      { name: "Correct choice of u and dv", awarded: 2, max: 2, status: "full" },
+      { name: "Apply IBP formula", awarded: 3, max: 3, status: "full" },
+      { name: "Final evaluation", awarded: 2, max: 2, status: "full" },
+    ],
+  },
+  {
+    id: 5,
+    submission_id: 202,
+    studentId: "STU-0082",
+    questionRef: "Q2",
+    questionText: "Q2: Find the eigenvalues of the matrix [[2, 1], [1, 2]] and state one corresponding eigenvector.",
+    status: "pending",
+    timeAgo: "5m ago",
+    confidence: 84,
+    aiScore: 5,
+    maxScore: 6,
+    ocrConfidence: 88,
+    ocrText: "(2−λ)² − 1 = 0\nλ² − 4λ + 3 = 0\nλ = 1 and λ = 3\nλ = 1 ⇒ v = (1, −1)",
+    aiJustification: "Eigenvalues are correct and one valid eigenvector is provided. A small sign inconsistency in the intermediate system costs one point under the eigenvector criterion.",
+    rubric: [
+      { name: "Characteristic equation", maxPoints: 2, keywords: ["λ² − 4λ + 3"] },
+      { name: "Eigenvalues", maxPoints: 2, keywords: ["λ = 1", "λ = 3"] },
+      { name: "Eigenvector", maxPoints: 2, keywords: ["(1, −1)"] },
+    ],
+    rubricMatch: [
+      { name: "Characteristic equation", awarded: 2, max: 2, status: "full" },
+      { name: "Eigenvalues", awarded: 2, max: 2, status: "full" },
+      { name: "Eigenvector", awarded: 1, max: 2, status: "partial" },
+    ],
+  },
+  {
+    id: 6,
+    submission_id: 202,
+    studentId: "STU-0082",
+    questionRef: "Q3",
+    questionText: "Q3: Determine whether the series sum of 1/(n·ln n) from n = 2 to infinity converges, with justification.",
+    status: "pending",
+    timeAgo: "6m ago",
+    confidence: 62,
+    aiScore: 5,
+    maxScore: 8,
+    ocrConfidence: 70,
+    ocrText: "integral test on f(x) = 1/(x ln x)\n∫₂^∞ dx/(x ln x) = [ln(ln x)]₂^∞\n→ ∞,  so the integral diverges\n∴ series diverges",
+    aiJustification: "Applies the integral test correctly and reaches the right conclusion that the series diverges. The test hypotheses (positive, decreasing, continuous) were not verified, so the justification is not fully rigorous.",
+    rubric: [
+      { name: "Select valid test", maxPoints: 2, keywords: ["integral test"] },
+      { name: "Evaluate integral", maxPoints: 3, keywords: ["ln(ln x)"] },
+      { name: "Conclusion + justification", maxPoints: 3, keywords: ["diverges"] },
+    ],
+    rubricMatch: [
+      { name: "Select valid test", awarded: 2, max: 2, status: "full" },
+      { name: "Evaluate integral", awarded: 3, max: 3, status: "full" },
+      { name: "Conclusion + justification", awarded: 0, max: 3, status: "none" },
+    ],
+  },
+];
+
+const MOCK_EXAMS = [
+  { id: 2, code: "MATH201", title: "Advanced Mathematics — Midterm II", term: "Fall 2026", pending: 6, total: 24, avgConfidence: 78, updatedAgo: "2m ago" },
+  { id: 7, code: "CS301", title: "Data Structures — Midterm", term: "Fall 2026", pending: 11, total: 40, avgConfidence: 84, updatedAgo: "18m ago" },
+  { id: 9, code: "CS401", title: "Algorithms — Quiz 3", term: "Fall 2026", pending: 3, total: 31, avgConfidence: 91, updatedAgo: "1h ago" },
+  { id: 12, code: "PHY210", title: "Classical Mechanics — Final", term: "Fall 2026", pending: 16, total: 52, avgConfidence: 69, updatedAgo: "4h ago" },
+];
+
 const Toast = ({ message, onDone }) => {
   useEffect(() => {
     const t = setTimeout(onDone, 2500);
@@ -55,7 +213,6 @@ const Toast = ({ message, onDone }) => {
   );
 };
 
-// Queue Item
 const QueueItem = ({ item, selected, onClick, sessionStatuses }) => {
   const liveStatus = sessionStatuses[item.id] || item.status;
   return (
@@ -91,7 +248,6 @@ const QueueItem = ({ item, selected, onClick, sessionStatuses }) => {
   );
 };
 
-// Section Wrapper 
 function Section({ label, title, children }) {
   return (
     <div style={{ marginBottom: 28 }}>
@@ -105,7 +261,6 @@ function Section({ label, title, children }) {
   );
 }
 
-// Section views
 const sectionTransition = {
   initial: { opacity: 0, y: 14 },
   animate: { opacity: 1, y: 0, transition: { ...SPRING_LG } },
@@ -226,10 +381,97 @@ function SectionFlagged({ items, sessionStatuses }) {
   );
 }
 
-// Main Component
+function ExamCard({ exam, onSelect }) {
+  const conf = typeof exam.avgConfidence === "number" ? exam.avgConfidence : null;
+  const confC = conf == null ? T.text2 : conf >= 80 ? T.emerald : conf >= 60 ? "#f59e0b" : T.red;
+  return (
+    <motion.div
+      variants={rowItem}
+      onClick={() => onSelect(exam)}
+      whileHover={{ y: -3, borderColor: T.borderStrong }}
+      whileTap={{ scale: 0.99 }}
+      style={{ cursor: "pointer", background: T.surface, border: `1px solid ${T.border}`, borderRadius: 14, padding: "18px 20px", display: "flex", flexDirection: "column", gap: 14 }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        {exam.code ? (
+          <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, fontWeight: 700, color: T.cyan, background: T.cyanDim, borderRadius: 5, padding: "3px 8px", letterSpacing: "0.04em" }}>{exam.code}</span>
+        ) : (
+          <span />
+        )}
+        <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 10, color: T.text3 }}>{exam.updatedAgo ?? exam.uploaded ?? ""}</span>
+      </div>
+      <div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: T.text1, lineHeight: 1.4, letterSpacing: "-0.01em" }}>{exam.title}</div>
+        {exam.term && <div style={{ fontSize: 11, color: T.text3, marginTop: 4, fontFamily: "Geist Mono, monospace" }}>{exam.term}</div>}
+      </div>
+      <div style={{ height: 1, background: T.border }} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div>
+            <div style={{ fontFamily: "Geist Mono, monospace", fontSize: 18, fontWeight: 700, color: exam.pending > 0 ? T.cyan : T.text2, lineHeight: 1 }}>{exam.pending}</div>
+            <div style={{ fontFamily: "Geist Mono, monospace", fontSize: 9, color: T.text3, textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 3 }}>Pending</div>
+          </div>
+          <div>
+            <div style={{ fontFamily: "Geist Mono, monospace", fontSize: 18, fontWeight: 700, color: T.text2, lineHeight: 1 }}>{exam.total}</div>
+            <div style={{ fontFamily: "Geist Mono, monospace", fontSize: 9, color: T.text3, textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 3 }}>Scripts</div>
+          </div>
+          {conf != null && (
+            <div>
+              <div style={{ fontFamily: "Geist Mono, monospace", fontSize: 18, fontWeight: 700, color: confC, lineHeight: 1 }}>{conf}%</div>
+              <div style={{ fontFamily: "Geist Mono, monospace", fontSize: 9, color: T.text3, textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 3 }}>Avg conf</div>
+            </div>
+          )}
+        </div>
+        <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 12, fontWeight: 600, color: T.cyan }}>Grade →</span>
+      </div>
+    </motion.div>
+  );
+}
+
+function ExamListView({ exams, loading, onSelect }) {
+  return (
+    <div style={{ minHeight: "100dvh", background: T.bg, fontFamily: "Geist, sans-serif", color: T.text1, display: "flex", flexDirection: "column" }}>
+      <div style={{ height: 64, display: "flex", alignItems: "center", gap: 10, padding: "0 32px", borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
+        <div style={{ width: 30, height: 30, borderRadius: 8, background: T.cyan, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 16px ${T.cyanGlow}` }}>
+          <span style={{ color: T.bg, fontSize: 16, fontWeight: 800, lineHeight: 1 }}>→</span>
+        </div>
+        <span style={{ fontSize: 16, fontWeight: 700, color: T.text1, letterSpacing: "-0.02em" }}>GradeOps</span>
+        <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 9, fontWeight: 700, color: T.cyan, background: T.cyanDim, borderRadius: 4, padding: "2px 6px", letterSpacing: "0.08em" }}>BETA</span>
+      </div>
+      <div style={{ flex: 1, overflowY: "auto", padding: "40px 32px 56px" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <div style={{ marginBottom: 28 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 700, color: T.text1, letterSpacing: "-0.03em", margin: 0 }}>Exams to grade</h1>
+            <p style={{ fontSize: 13, color: T.text3, marginTop: 6, margin: "6px 0 0" }}>Select an exam to open its review queue</p>
+          </div>
+          {loading ? (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 240, gap: 10, color: T.text3 }}>
+              <LoadingSpinner />
+              <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 12 }}>Loading exams…</span>
+            </div>
+          ) : exams.length === 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 280, gap: 16 }}>
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="8" y="6" width="32" height="36" rx="4" stroke={T.text3} strokeWidth="1.5" /><path d="M16 16h16M16 24h16M16 32h10" stroke={T.text3} strokeWidth="1.5" strokeLinecap="round" /></svg>
+              <div style={{ fontSize: 14, color: T.text3 }}>No exams available to grade</div>
+            </div>
+          ) : (
+            <motion.div variants={rowStagger} initial="hidden" animate="visible" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
+              {exams.map((exam) => (
+                <ExamCard key={exam.id} exam={exam} onSelect={onSelect} />
+              ))}
+            </motion.div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TADashboard() {
   const navigate = useNavigate();
-  const examId = 2;
+  const [exams, setExams] = useState([]);
+  const [loadingExams, setLoadingExams] = useState(true);
+  const [selectedExam, setSelectedExam] = useState(null);
   const [queue, setQueue] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
   const [activeRoute, setActiveRoute] = useState("/ta");
@@ -252,21 +494,49 @@ export default function TADashboard() {
   }, []);
 
   useEffect(() => {
-    const fetchQueue = async () => {
+    const fetchExams = async () => {
       try {
-        const res = await api.get(`/exams/${examId}/queue`);
-        setQueue(res.data.queue);
-        if (res.data.queue.length > 0) {
-          setSelectedId(res.data.queue[0].id);
-        }
+        const res = await api.get(`/exams/to-grade`);
+        const data = res?.data;
+        const next = Array.isArray(data) && data.length > 0 ? data : MOCK_EXAMS;
+        setExams(next);
       } catch (err) {
-        console.error("Failed to load queue", err);
+        console.warn("Failed to load exams, using mock data", err);
+        setExams(MOCK_EXAMS);
       } finally {
-        setLoadingData(false);
+        setLoadingExams(false);
+      }
+    };
+    fetchExams();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedExam) return;
+    let cancelled = false;
+    const fetchQueue = async () => {
+      setLoadingData(true);
+      setSessionStatuses({});
+      setSessionReviewed(0);
+      setFilter("All");
+      try {
+        const res = await api.get(`/exams/${selectedExam.id}/queue`);
+        const data = res?.data?.queue;
+        const next = Array.isArray(data) && data.length > 0 ? data : MOCK_QUEUE;
+        if (cancelled) return;
+        setQueue(next);
+        setSelectedId(next.length > 0 ? next[0].id : null);
+      } catch (err) {
+        console.warn("Failed to load queue, using mock data", err);
+        if (cancelled) return;
+        setQueue(MOCK_QUEUE);
+        setSelectedId(MOCK_QUEUE.length > 0 ? MOCK_QUEUE[0].id : null);
+      } finally {
+        if (!cancelled) setLoadingData(false);
       }
     };
     fetchQueue();
-  }, [examId]);
+    return () => { cancelled = true; };
+  }, [selectedExam]);
 
   const isMobile = screenW < 768;
   const isTablet = screenW >= 768 && screenW < 1024;
@@ -350,7 +620,6 @@ export default function TADashboard() {
         console.error("Failed to finalize submission", err);
       }
     }
-    // ---------------------------------------------------------
 
     setTimeout(() => nextItem(), 800);
   }, [selectedItem, loading, nextItem, overrideScore, overrideReason, queue, sessionStatuses]);
@@ -367,6 +636,22 @@ export default function TADashboard() {
     setOverrideOpen((v) => !v);
     if (selectedItem) setOverrideScore(String(selectedItem.aiScore));
   }, [selectedItem]);
+
+  const openExam = useCallback((exam) => {
+    setSelectedExam(exam);
+    setActiveRoute("/ta");
+  }, []);
+
+  const backToExams = useCallback(() => {
+    setSelectedExam(null);
+    setActiveRoute("/ta");
+    setQueue([]);
+    setSelectedId(null);
+    setSessionStatuses({});
+    setSessionReviewed(0);
+    setOverrideOpen(false);
+    setFilter("All");
+  }, []);
 
   useEffect(() => {
     const handler = (e) => {
@@ -390,24 +675,30 @@ export default function TADashboard() {
 
   const progressPct = totalSession > 0 ? (sessionReviewed / totalSession) * 100 : 0;
 
+  if (!selectedExam) {
+    return <ExamListView exams={exams} loading={loadingExams} onSelect={openExam} />;
+  }
+
   return (
     <div style={{ display: "flex", minHeight: "100dvh", background: T.bg, fontFamily: "Geist, sans-serif", color: T.text1, overflow: "hidden" }}>
 
-      {/* Sidebar */}
       <Sidebar activeRoute={activeRoute} onNavigate={(path) => {
         setActiveRoute(path);
         navigate(path, { replace: true });
       }} />
 
-      {/* Content — offset by sidebar width */}
       <div style={{ display: "flex", flex: 1, marginLeft: sidebarW, overflow: "hidden", height: "100dvh", flexDirection: "column" }}>
 
-        {/* ── Top bar (non-queue sections) ── */}
         {PATH_TO_SECTION[activeRoute] !== "queue" && (
           <div style={{ height: 56, backgroundColor: T.surface, borderBottom: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 28px", flexShrink: 0 }}>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: 15, color: T.text1, letterSpacing: "-0.02em" }}>{SECTION_META[PATH_TO_SECTION[activeRoute] || "queue"].title}</div>
-              <div style={{ fontSize: 11, color: T.text3, marginTop: 1 }}>{SECTION_META[PATH_TO_SECTION[activeRoute] || "queue"].sub}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <button onClick={backToExams} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: `1px solid ${T.border}`, borderRadius: 6, cursor: "pointer", color: T.text2, fontFamily: "Geist Mono, monospace", fontSize: 11, padding: "5px 9px" }}>
+                <span style={{ fontSize: 13 }}>←</span> Exams
+              </button>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: T.text1, letterSpacing: "-0.02em" }}>{SECTION_META[PATH_TO_SECTION[activeRoute] || "queue"].title}</div>
+                <div style={{ fontSize: 11, color: T.text3, marginTop: 1 }}>{SECTION_META[PATH_TO_SECTION[activeRoute] || "queue"].sub}</div>
+              </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <Dot color={T.emerald} />
@@ -416,15 +707,16 @@ export default function TADashboard() {
           </div>
         )}
 
-        {/* ── Section rendering ── */}
         <AnimatePresence mode="wait">
           {PATH_TO_SECTION[activeRoute] === "queue" && (
             <motion.div key="queue" style={{ display: "flex", flex: 1, overflow: "hidden", height: "100%" }}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
 
-              {/* Queue Panel */}
               <div style={{ width: 280, minWidth: 280, background: T.surface, borderRight: `1px solid ${T.border}`, display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden" }}>
                 <div style={{ padding: "18px 16px 12px", borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
+                  <button onClick={backToExams} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "none", cursor: "pointer", color: T.text3, fontFamily: "Geist Mono, monospace", fontSize: 11, padding: 0, marginBottom: 10 }}>
+                    <span style={{ fontSize: 13 }}>←</span> All exams
+                  </button>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                     <span style={{ fontSize: 14, fontWeight: 600, color: T.text1, letterSpacing: "-0.01em" }}>Review Queue</span>
                     <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, fontWeight: 700, color: T.cyan, background: T.cyanDim, borderRadius: 5, padding: "3px 8px" }}>
@@ -448,7 +740,6 @@ export default function TADashboard() {
                 </div>
               </div>
 
-              {/* Right grading panel */}
               <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden", background: T.bg }}>
                 <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: "10px 20px", display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
                   <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: T.text3, whiteSpace: "nowrap" }}>Session progress</span>
@@ -476,7 +767,7 @@ export default function TADashboard() {
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                         <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 14, fontWeight: 700, color: T.cyan }}>{selectedItem.studentId}</span>
                         <span style={{ fontSize: 12, color: T.text3 }}>·</span>
-                        <span style={{ fontSize: 13, color: T.text2 }}>Advanced Mathematics — Midterm II</span>
+                        <span style={{ fontSize: 13, color: T.text2 }}>{selectedExam.title}</span>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                         <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: T.text3 }}>{selectedIndex + 1} of {totalVisible}</span>
@@ -636,7 +927,6 @@ export default function TADashboard() {
         </AnimatePresence>
       </div>
 
-      {/* Toast */}
       <AnimatePresence>
         {toast && <Toast key={toast} message={toast} onDone={() => setToast(null)} />}
       </AnimatePresence>

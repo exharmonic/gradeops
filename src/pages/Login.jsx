@@ -86,9 +86,6 @@ function PasswordInput({ id, label, value, onChange, autoComplete }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CALLOUTS = [
-    { stat: "94.7%", label: "OCR extraction accuracy" },
-    { stat: "11×", label: "faster grading vs manual" },
-    { stat: "2,400+", label: "exams processed this month" },
 ];
 
 const TRUST = [
