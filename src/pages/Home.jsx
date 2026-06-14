@@ -53,7 +53,7 @@ function Nav({ onAuth }) {
             padding: "3px 9px", borderRadius: 4, letterSpacing: "0.07em",
           }}>BETA</span>
           <MagBtn onClick={() => navigate("/login")} variant="ghost">Sign in</MagBtn>
-          <MagBtn onClick={onAuth} variant="primary">Get access <Arrow /></MagBtn>
+          <MagBtn onClick={onAuth} variant="primary">Register <Arrow /></MagBtn>
         </motion.div>
       </div>
     </motion.header>
@@ -752,7 +752,7 @@ function Footer() {
           <span style={{ fontSize: 11, fontFamily: "Geist Mono, monospace", color: T.text3 }}>© 2025</span>
         </div>
         <div style={{ display: "flex", gap: 24 }}>
-          {[].map(l => (
+          {["Privacy"].map(l => (
             <a key={l} href="#" style={{ fontSize: 13, color: T.text3, textDecoration: "none", transition: "color 0.15s" }}
               onMouseEnter={e => e.target.style.color = T.text1} onMouseLeave={e => e.target.style.color = T.text3}>{l}</a>
           ))}
