@@ -1,14 +1,14 @@
+import asyncio
 import os
 import base64
 import json
-import sqlite3
+import re
 from typing import Any, Literal, Optional, TypedDict
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langgraph.graph import StateGraph, END
 from langgraph.types import interrupt
-from langgraph.checkpoint.sqlite import SqliteSaver
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 
@@ -94,52 +94,71 @@ class GradingState(TypedDict):
 
 
 # NODES
-def run_nemotron_ocr_node(state: GradingState):
+async def run_nemotron_ocr_node(state: GradingState):
     print("--- [NODE 1] EXECUTING MULTIMODAL OCR VIA NEMOTRON ---")
 
-    nemotron_vlm = ChatOpenAI(
-        api_key=os.getenv("OPENROUTER_API_KEY"),
-        model="nvidia/nemotron-nano-12b-v2-vl:free",
-        base_url="https://openrouter.ai/api/v1",
-        max_completion_tokens=2000,
+    # nemotron_vlm = ChatOpenAI(
+    #     api_key=os.getenv("OPENROUTER_API_KEY"),
+    #     model="nvidia/nemotron-nano-12b-v2-vl:free",
+    #     base_url="https://openrouter.ai/api/v1",
+    #     max_completion_tokens=2000,
+    # )
+    gemini_vlm = ChatGoogleGenerativeAI(
+        model="gemini-3.1-flash-lite",
+        temperature=0.0,
+        max_output_tokens=2000,
     )
 
-    full_transcription = ""
+    def extract_page_number(filepath):
+        match = re.search(r"page-(\d+)\.png", filepath)
+        return int(match.group(1)) if match else 0
 
-    for index, img_path in enumerate(state["page_img_paths"]):
-        print(f"Reading page number {index+1} from {img_path}...")
+    sorted_paths = sorted(state["page_img_paths"], key=extract_page_number)
 
-        try:
-            with open(img_path, "rb") as img_file:
-                img_bytes = img_file.read()
-                b64_img = base64.b64encode(img_bytes).decode("utf-8")
-                img_file.close()
+    sem = asyncio.Semaphore(3)
 
-            message = HumanMessage(
-                content=[
-                    {
-                        "type": "text",
-                        "text": "You are an expert academic digitizer. Your task is to convert this handwritten exam page into clean, structured Markdown. Follow these strict rules: "
-                        "1. INTELLIGENT CORRECTION: Fix obvious spelling errors caused by messy cursive (e.g., 'quicksoft' to 'quicksort', 'heavyly' to 'heavily'). However, DO NOT alter the student's underlying logic, grammar, or factual claims. "
-                        "2. MATHEMATICS & SCIENCE: You MUST use standard LaTeX for all math, physics, chemistry, and algorithmic notation. Use single `$` for inline variables (e.g., $O(n^2)$) and double `$$` for block equations. "
-                        "3. STRUCTURE: Preserve explicit question labels (e.g., 'Q1)', '2a.') clearly on new lines to maintain the document hierarchy. "
-                        "4. NOISE FILTERING: Completely ignore scribbles, explicitly crossed-out text, smudges, and page numbers. "
-                        "5. BOUNDARIES: Do not attempt to solve, grade, or evaluate the text. Output ONLY the corrected transcription."
-                        "DO NOT input any conversational text, else THE SYSTEM AND DATABASE WILL ALL CRASH!! Your response must be exactly the transcription, not a word more, not a word less.",
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/png;base64,{b64_img}"},
-                    },
-                ]
-            )
+    async def process_single_page(index: int, img_path: str):
 
-            response = nemotron_vlm.invoke([message])
-            full_transcription += f"\n\n--- Page {index+1} ---\n\n" + response.content
-        except Exception as e:
-            print(f"Error reading and processing {img_path}: {e}")
-            return {"status": "error_ocr_processing"}
-    print(f"OCR text transcribed: {full_transcription}")
+        async with sem:
+            await asyncio.sleep(5)
+            print(f"Reading page number {index+1} from {img_path}...")
+            try:
+                with open(img_path, "rb") as img_file:
+                    b64_img = base64.b64encode(img_file.read()).decode("utf-8")
+
+                message = HumanMessage(
+                    content=[
+                        {
+                            "type": "text",
+                            "text": "You are an expert academic digitizer. Your task is to convert this handwritten exam page into clean, structured Markdown. Follow these strict rules: "
+                            "1. INTELLIGENT CORRECTION: Fix obvious spelling errors caused by messy cursive (e.g., 'quicksoft' to 'quicksort', 'heavyly' to 'heavily'). However, DO NOT alter the student's underlying logic, grammar, or factual claims. "
+                            "2. MATHEMATICS & SCIENCE: You MUST use standard LaTeX for all math, physics, chemistry, and algorithmic notation. Use single `$` for inline variables (e.g., $O(n^2)$) and double `$$` for block equations. "
+                            "3. STRUCTURE: Preserve explicit question labels (e.g., 'Q1)', '2a.') clearly on new lines to maintain the document hierarchy. "
+                            "4. NOISE FILTERING: Completely ignore scribbles, explicitly crossed-out text, smudges, and page numbers. "
+                            "5. BOUNDARIES: Do not attempt to solve, grade, or evaluate the text. Output ONLY the corrected transcription."
+                            "DO NOT input any conversational text, else THE SYSTEM AND DATABASE WILL ALL CRASH!! Your response must be exactly the transcription, not a word more, not a word less.",
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:image/png;base64,{b64_img}"},
+                        },
+                    ]
+                )
+
+                response = await gemini_vlm.ainvoke([message])
+                return f"\n\n--- Page {index+1} ---\n\n{response.content}"
+
+            except Exception as e:
+                print(f"Error reading and processing {img_path}: {e}")
+                return f"\n\n--- Page {index+1} ---\n\n[ERROR PROCESSING PAGE]"
+
+    tasks = [process_single_page(i, path) for i, path in enumerate(sorted_paths)]
+
+    results = await asyncio.gather(*tasks)
+
+    full_transcription = "".join(results)
+
+    print("OCR text transcribed successfully.")
     return {"ocr_text": full_transcription, "status": "ocr_completed"}
 
 
@@ -209,7 +228,7 @@ def grade_with_gemini_model(state: GradingState):
     except Exception as e:
         print(f"Error during Gemini Grading: {e}")
         return {"status": "error_grading"}
-    
+
 
 builder = StateGraph(GradingState)
 
@@ -221,9 +240,3 @@ builder.set_entry_point("nemotron_ocr")
 builder.add_edge("nemotron_ocr", "gemini_grader")
 builder.add_edge("gemini_grader", "human_intervention")
 builder.add_edge("human_intervention", END)
-
-conn = sqlite3.connect("checkpoints.db", check_same_thread=False)
-memory = SqliteSaver(conn)
-memory.setup()
-
-graph = builder.compile(checkpointer=memory)

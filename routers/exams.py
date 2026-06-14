@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.orm import Session
-from ai_engine.graph import graph
+from ai_engine.graph import builder
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 import app.models as models
 from app.database import get_db
 from app.auth import get_current_user
@@ -232,7 +233,7 @@ async def delete_exam(
 
 
 @router.get("/{exam_id}/queue")
-def get_exam_review_queue(exam_id: int, db: Session = Depends(get_db)):
+async def get_exam_review_queue(exam_id: int, db: Session = Depends(get_db)): # Added async
 
     pending_subs = (
         db.query(models.Submission)
@@ -245,20 +246,24 @@ def get_exam_review_queue(exam_id: int, db: Session = Depends(get_db)):
 
     master_queue = []
 
-    for sub in pending_subs:
-        config = {"configurable": {"thread_id": f"submission_{sub.id}"}}
-        paused_state = graph.get_state(config)
+    async with AsyncSqliteSaver.from_conn_string("checkpoints.db") as memory:
+        graph = builder.compile(checkpointer=memory)
+        
+        for sub in pending_subs:
+            config = {"configurable": {"thread_id": f"submission_{sub.id}"}}
+            
+            paused_state = await graph.aget_state(config) 
 
-        if paused_state.tasks and paused_state.tasks[0].interrupts:
-            ui_payload = paused_state.tasks[0].interrupts[0].value
-            questions = ui_payload.get("questions", [])
+            if paused_state.tasks and paused_state.tasks[0].interrupts:
+                ui_payload = paused_state.tasks[0].interrupts[0].value
+                questions = ui_payload.get("questions", [])
 
-            for q in questions:
-                q["submission_id"] = sub.id
-                master_queue.append(q)
-        else:
-            print(
-                f"Submission {sub.id} is 'pending' in DB, but missing from LangGraph RAM!"
-            )
+                for q in questions:
+                    q["submission_id"] = sub.id
+                    master_queue.append(q)
+            else:
+                print(
+                    f"Submission {sub.id} is 'pending' in DB, but missing from LangGraph RAM!"
+                )
 
     return {"queue": master_queue}

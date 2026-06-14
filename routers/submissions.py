@@ -14,7 +14,8 @@ from app.database import SessionLocal
 from typing import Annotated, List
 from app.database import get_db
 from sqlalchemy.orm import Session, joinedload
-from ai_engine.graph import graph
+from ai_engine.graph import builder
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.types import Command
 import app.schemas as schemas
 import os, shutil, re, pymupdf
@@ -146,7 +147,7 @@ def upload_files(
 
 
 @router.get("/{submission_id}/review")
-def get_human_review_data(submission_id: int, db: Session = Depends(get_db)):
+async def get_human_review_data(submission_id: int, db: Session = Depends(get_db)):
 
     submission = (
         db.query(models.Submission)
@@ -167,7 +168,9 @@ def get_human_review_data(submission_id: int, db: Session = Depends(get_db)):
 
     config = {"configurable": {"thread_id": f"submission_{submission.id}"}}
 
-    paused_state = graph.get_state(config)
+    async with AsyncSqliteSaver.from_conn_string("checkpoints.db") as memory:
+        graph = builder.compile(checkpointer=memory)
+        paused_state = await graph.aget_state(config)
 
     if not paused_state.tasks or not paused_state.tasks[0].interrupts:
         raise HTTPException(
@@ -181,7 +184,7 @@ def get_human_review_data(submission_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/{submission_id}/review")
-def submit_human_review(
+async def submit_human_review(
     submission_id: int, payload: schemas.TAReviewSubmit, db: db_dependency
 ):
     submission = (
@@ -204,7 +207,11 @@ def submit_human_review(
     config = {"configurable": {"thread_id": f"submission_{submission.id}"}}
 
     try:
-        final_state = graph.invoke(Command(resume=payload.model_dump()), config=config)
+        async with AsyncSqliteSaver.from_conn_string("checkpoints.db") as memory:
+            graph = builder.compile(checkpointer=memory)
+            final_state = await graph.ainvoke(
+                Command(resume=payload.model_dump()), config=config
+            )
 
         if final_state:
             final_json = final_state.get("detailed_analysis", {})
@@ -220,6 +227,7 @@ def submit_human_review(
                 "message": "Grading finalized successfully.",
                 "final_score": total_score,
             }
+
     except Exception as e:
         db.rollback()
         raise HTTPException(
@@ -301,18 +309,23 @@ async def execute_grading_pipeline(submission_id: int):
         }
 
         config = {"configurable": {"thread_id": f"submission_{submission.id}"}}
-        final_state = graph.invoke(initial_state, config=config)
 
-        current_graph_state = graph.get_state(config)
+        async with AsyncSqliteSaver.from_conn_string("checkpoints.db") as memory:
+            await memory.setup()
+            graph = builder.compile(checkpointer=memory)
 
-        if current_graph_state.tasks and current_graph_state.tasks[0].interrupts:
-            submission.status = "pending_review"
-            print(f"Submission {submission.id} successfully queued for TA review.")
-        else:
-            submission.status = "error"
-            print(
-                f"PIPELINE FAILED or skipped interrupt for sub {submission.id}. Final state: {final_state.get('status')}"
-            )
+            final_state = await graph.ainvoke(initial_state, config=config)
+
+            current_graph_state = await graph.aget_state(config)
+
+            if current_graph_state.tasks and current_graph_state.tasks[0].interrupts:
+                submission.status = "pending_review"
+                print(f"Submission {submission.id} successfully queued for TA review.")
+            else:
+                submission.status = "error"
+                print(
+                    f"PIPELINE FAILED or skipped interrupt for sub {submission.id}. Final state: {final_state.get('status')}"
+                )
 
         db.commit()
 
