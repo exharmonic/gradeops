@@ -411,7 +411,7 @@ export default function Login() {
                             initial="hidden"
                             animate="visible"
                         >
-                            Platform at a glance
+                        
                         </motion.p>
 
                         {CALLOUTS.map((c, i) => (

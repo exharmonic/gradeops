@@ -741,14 +741,6 @@ export default function TADashboard() {
               </div>
 
               <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden", background: T.bg }}>
-                <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: "10px 20px", display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
-                  <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: T.text3, whiteSpace: "nowrap" }}>Session progress</span>
-                  <div style={{ flex: 1, height: 2, background: T.border, borderRadius: 2, overflow: "hidden" }}>
-                    <motion.div animate={{ width: `${progressPct}%` }} transition={{ duration: 0.6, ease: EASE_EXPO }} style={{ height: "100%", background: T.cyan, boxShadow: `0 0 6px ${T.cyanGlow}`, borderRadius: 2 }} />
-                  </div>
-                  <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: T.text2, whiteSpace: "nowrap" }}>{sessionReviewed} / {totalSession} reviewed</span>
-                </div>
-
                 {!selectedItem ? (
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20 }}>
                     <svg width="48" height="48" viewBox="0 0 48 48" fill="none">

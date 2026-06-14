@@ -77,14 +77,12 @@ function PasswordInput({ id, label, value, onChange, autoComplete }) {
     </div>
   );
 }
-// ─────────────────────────────────────────────────────────────────────────────
 
 const PIPELINE_STEPS = [
   { label: "Upload", sub: "Bulk PDF ingestion & rubric JSON", color: T.cyan },
   { label: "OCR", sub: "Vision model handwriting extraction", color: T.emerald },
   { label: "AI Grade", sub: "Agentic LLM partial-credit scoring", color: T.cyan },
   { label: "TA Review", sub: "Human-in-the-loop override queue", color: T.emerald },
-  { label: "Release", sub: "Instructor approval & audit log export", color: T.cyan },
 ];
 
 const ROLE_OPTIONS = [

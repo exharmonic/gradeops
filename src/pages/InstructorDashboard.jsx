@@ -121,16 +121,7 @@ async function get_exams() {
 
 }
 
-const MOCK_GRADES = [
-  { id: "STU-0041", exam: "CS301 – Midterm", score: 87, max: 100, released: true },
-  { id: "STU-0082", exam: "CS301 – Midterm", score: 54, max: 100, released: true },
-  { id: "STU-0113", exam: "MATH201 – Lin. Alg.", score: 91, max: 100, released: false },
-  { id: "STU-0124", exam: "MATH201 – Lin. Alg.", score: 43, max: 100, released: false },
-  { id: "STU-0057", exam: "CS301 – Midterm", score: 76, max: 100, released: true },
-  { id: "STU-0198", exam: "CS401 – Algo Quiz 3", score: 95, max: 100, released: true },
-  { id: "STU-0203", exam: "CS401 – Algo Quiz 3", score: 62, max: 100, released: false },
-  { id: "STU-0211", exam: "MATH201 – Lin. Alg.", score: 38, max: 100, released: false },
-];
+const MOCK_GRADES = [];
 
 const RUBRIC_PLACEHOLDER = `{
   "exam": "MATH201 Midterm",
@@ -182,12 +173,7 @@ const RUBRIC_PLACEHOLDER = `{
 
 const RUBRIC_PLACEHOLDER_RAW = RUBRIC_PLACEHOLDER;
 
-const MOCK_EXAMS = [
-  { id: 1, title: "CS301 – Midterm Exam", uploaded: "Jun 07, 2026", scripts: 182, graded: 182, status: "Completed", rubric: JSON.parse(RUBRIC_PLACEHOLDER_RAW) },
-  { id: 2, title: "MATH201 – Linear Algebra", uploaded: "Jun 06, 2026", scripts: 210, graded: 140, status: "In Review", rubric: JSON.parse(RUBRIC_PLACEHOLDER_RAW) },
-  { id: 3, title: "PHY101 – Mechanics Final", uploaded: "Jun 06, 2026", scripts: 96, graded: 60, status: "Processing", rubric: JSON.parse(RUBRIC_PLACEHOLDER_RAW) },
-  { id: 4, title: "CS401 – Algorithms Quiz 3", uploaded: "Jun 05, 2026", scripts: 74, graded: 74, status: "Completed", rubric: JSON.parse(RUBRIC_PLACEHOLDER_RAW) },
-];
+const MOCK_EXAMS = [];
 
 /* 
    SMALL SHARED COMPONENTS
@@ -344,12 +330,12 @@ function SectionExams({ exams, onUploadSuccess }) {
   const [dragOver, setDragOver] = useState(false);
   const [files, setFiles] = useState([]);
   const [rubricJson, setRubricJson] = useState(RUBRIC_PLACEHOLDER);
-  const [jsonValid, setJsonValid] = useState(null); // null | true | false
+  const [jsonValid, setJsonValid] = useState(null);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef();
 
   // View-exam panel state
-  const [viewingExam, setViewingExam] = useState(null); // exam object or null
+  const [viewingExam, setViewingExam] = useState(null);
   const [moreFilesRef] = useState(() => ({ current: null }));
   const moreFileInputRef = useRef();
   const [moreFiles, setMoreFiles] = useState([]);
@@ -366,7 +352,7 @@ function SectionExams({ exams, onUploadSuccess }) {
         setViewingExam(updatedData);
       }
     }
-  }, [exams]); // Re-run this whenever the parent fetches new exams
+  }, [exams]);
 
   const addFiles = (incoming) => {
     const arr = Array.from(incoming).filter(f => f.type === "application/pdf");
