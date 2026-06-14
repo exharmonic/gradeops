@@ -1,6 +1,6 @@
 import { useState, useContext, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence, useSpring, useTransform } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import T, { SPRING, SPRING_LG, EASE_EXPO } from "../tokens";
 import { MagBtn, LoadingSpinner, Dot } from "../components/ui";
 import { UserContext } from "../context/UserContext";
@@ -13,12 +13,6 @@ const Ico = {
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" />
       <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
-    </svg>
-  ),
-  Trend: ({ up }) => (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={up ? T.emerald : T.red} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      {up ? <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /> : <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />}
-      {up ? <polyline points="17 6 23 6 23 12" /> : <polyline points="17 18 23 18 23 12" />}
     </svg>
   ),
   Eye: () => (
@@ -36,16 +30,6 @@ const Ico = {
       <polyline points="20 6 9 17 4 12" />
     </svg>
   ),
-  Plus: () => (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  ),
-  Copy: () => (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-    </svg>
-  ),
   Edit: () => (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -55,22 +39,6 @@ const Ico = {
   Search: () => (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  ),
-  Filter: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-    </svg>
-  ),
-  Release: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
-    </svg>
-  ),
-  Chevron: ({ dir = "down" }) => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-      style={{ transform: dir === "up" ? "rotate(180deg)" : "none" }}>
-      <polyline points="6 9 12 15 18 9" />
     </svg>
   ),
 };
@@ -104,23 +72,9 @@ function useBreakpoint() {
   return { isMobile: w < 768, isTablet: w >= 768 && w < 1024 };
 }
 
-
-async function get_exams() {
-  try {
-    const response = await api.get('/exams/')
-    return response.data
-  } catch (err) {
-    console.log(err)
-    return []
-  }
-
-}
-
 /* 
-   MOCK DATA
+   RUBRIC PLACEHOLDER
  */
-const MOCK_GRADES = [];
-
 const RUBRIC_PLACEHOLDER = `{
   "exam": "MATH201 Midterm",
   "questions": [
@@ -169,10 +123,6 @@ const RUBRIC_PLACEHOLDER = `{
   ]
 }`;
 
-const RUBRIC_PLACEHOLDER_RAW = RUBRIC_PLACEHOLDER;
-
-const MOCK_EXAMS = [];
-
 /* 
    SMALL SHARED COMPONENTS
  */
@@ -184,9 +134,7 @@ const StatusBadge = ({ status }) => {
     released: { color: T.text3, bg: "rgba(69,85,95,0.15)", border: T.border },
   };
   const s = map[status] || map["released"];
-
   const displayStatus = status.replace("_", " ").toUpperCase();
-
   return (
     <span style={{
       fontSize: "11px", fontWeight: 600, fontFamily: "Geist Mono, monospace",
@@ -237,7 +185,7 @@ const rowItem = {
 /* 
    STAT CARD
  */
-function StatCard({ label, value, trend, trendUp, accent }) {
+function StatCard({ label, value, accent }) {
   const displayed = useCountUp(value);
   return (
     <motion.div
@@ -263,18 +211,16 @@ function StatCard({ label, value, trend, trendUp, accent }) {
 function SectionOverview({ exams }) {
   return (
     <motion.div key="overview" {...sectionTransition}>
-      {/* stats grid */}
       <motion.div
         variants={rowStagger} initial="hidden" animate="visible"
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", marginBottom: "32px" }}
       >
-        <StatCard label="Total Exams" value={exams.length} trend="+2" trendUp />
-        <StatCard label="Exams Graded" value={exams.reduce((acc, curr) => { return acc + curr.graded; }, 0)} trend="+134" trendUp />
-        <StatCard label="Pending Review" value={exams.filter(exam => exam.status === "In Review").length} trend="+18" trendUp accent={T.cyan} />
-        <StatCard label="Flagged" value={0} trend="+3" trendUp={false} accent={T.red} />
+        <StatCard label="Total Exams" value={exams.length} />
+        <StatCard label="Exams Graded" value={exams.reduce((acc, curr) => acc + curr.graded, 0)} />
+        <StatCard label="Pending Review" value={exams.filter(exam => exam.status === "in_review").length} accent={T.cyan} />
+        <StatCard label="Flagged" value={0} accent={T.red} />
       </motion.div>
 
-      {/* recent exams table */}
       <div style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "14px", overflow: "hidden" }}>
         <div style={{ padding: "20px 24px", borderBottom: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span style={{ fontWeight: 700, fontSize: "15px", color: T.text1, letterSpacing: "-0.02em" }}>Recent Exams</span>
@@ -315,7 +261,7 @@ function SectionOverview({ exams }) {
 }
 
 /* 
-   SECTION 2 — UPLOAD EXAM
+   SECTION 2 — EXAMS
  */
 function SectionExams({ exams, onUploadSuccess }) {
   const [dragOver, setDragOver] = useState(false);
@@ -325,9 +271,7 @@ function SectionExams({ exams, onUploadSuccess }) {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef();
 
-  // View-exam panel state
   const [viewingExam, setViewingExam] = useState(null);
-  const [moreFilesRef] = useState(() => ({ current: null }));
   const moreFileInputRef = useRef();
   const [moreFiles, setMoreFiles] = useState([]);
   const [editingRubric, setEditingRubric] = useState(false);
@@ -339,16 +283,13 @@ function SectionExams({ exams, onUploadSuccess }) {
   useEffect(() => {
     if (viewingExam) {
       const updatedData = exams.find(e => e.id === viewingExam.id);
-      if (updatedData) {
-        setViewingExam(updatedData);
-      }
+      if (updatedData) setViewingExam(updatedData);
     }
   }, [exams]);
 
   const addFiles = (incoming) => {
     const arr = Array.from(incoming).filter(f => f.type === "application/pdf");
     setFiles(prev => [...prev, ...arr.map(f => ({ file: f, name: f.name, size: f.size, progress: 0, id: Math.random() }))]);
-
   };
 
   const validateJson = () => {
@@ -357,10 +298,7 @@ function SectionExams({ exams, onUploadSuccess }) {
   };
 
   const handleUpload = async () => {
-    if (files.length == 0) {
-      alert("Please drop or select PDF files first.")
-      return;
-    }
+    if (files.length === 0) { alert("Please drop or select PDF files first."); return; }
     let parsedRubric;
     try {
       parsedRubric = JSON.parse(rubricJson);
@@ -370,61 +308,40 @@ function SectionExams({ exams, onUploadSuccess }) {
       alert("Your rubric JSON is invalid. Please fix syntax errors before uploading.");
       return;
     }
-
     setUploading(true);
-
     try {
       const title = parsedRubric.exam || "New Exam Batch";
-
-      const response = await api.post('/exams/', {
-        title: title,
-        rubric: parsedRubric
-      });
-
+      const response = await api.post('/exams/', { title, rubric: parsedRubric });
       const exam_id = response.data.id;
-
       const formData = new FormData();
-
-      files.forEach((f) => {
-        formData.append("files", f.file);
-      });
+      files.forEach((f) => formData.append("files", f.file));
       formData.append("exam_id", exam_id);
-
       await api.post('/upload/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setFiles(prev => prev.map(f => ({ ...f, progress: percentCompleted })));
-        }
+          const pct = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setFiles(prev => prev.map(f => ({ ...f, progress: pct })));
+        },
       });
-
       setFiles([]);
       if (onUploadSuccess) onUploadSuccess();
-
     } catch (err) {
       console.log(err);
-      const errMsg = err.response?.data?.detail || "Failed to upload files.";
-      alert(`Error: ${errMsg}`);
-      return;
+      alert(`Error: ${err.response?.data?.detail || "Failed to upload files."}`);
     } finally {
       setUploading(false);
     }
   };
 
-  // ── VIEW EXAM handlers ──
   const openViewExam = (exam) => {
     setViewingExam(exam);
     setMoreFiles([]);
     setEditingRubric(false);
-    let initialRubric = RUBRIC_PLACEHOLDER;
-    if (exam.rubric && Object.keys(exam.rubric).length > 0) {
-      initialRubric = typeof exam.rubric === "string"
-        ? exam.rubric
-        : JSON.stringify(exam.rubric, null, 2);
-    };
-    setEditRubricJson(initialRubric);
+    setEditRubricJson(
+      exam.rubric && Object.keys(exam.rubric).length > 0
+        ? (typeof exam.rubric === "string" ? exam.rubric : JSON.stringify(exam.rubric, null, 2))
+        : RUBRIC_PLACEHOLDER
+    );
     setEditRubricValid(null);
     setConfirmRemove(false);
   };
@@ -439,26 +356,20 @@ function SectionExams({ exams, onUploadSuccess }) {
   const addMoreFiles = (incoming) => {
     const arr = Array.from(incoming).filter(f => f.type === "application/pdf");
     setMoreFiles(prev => [...prev, ...arr.map(f => ({ file: f, name: f.name, size: f.size, progress: 0, id: Math.random() }))]);
-
   };
 
   const handleUploadMore = async () => {
-    if (moreFiles.length === 0) {
-      alert("Please select PDF files to add.");
-      return;
-    }
+    if (moreFiles.length === 0) { alert("Please select PDF files to add."); return; }
     try {
       const formData = new FormData();
       moreFiles.forEach((f) => formData.append("files", f.file));
       formData.append("exam_id", viewingExam.id);
       await api.post('/upload/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setMoreFiles(prev => prev.map(f => ({ ...f, progress: percentCompleted })));
-        }
+          const pct = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setMoreFiles(prev => prev.map(f => ({ ...f, progress: pct })));
+        },
       });
       if (onUploadSuccess) onUploadSuccess();
     } catch (err) {
@@ -468,14 +379,8 @@ function SectionExams({ exams, onUploadSuccess }) {
 
   const handleSaveRubric = async () => {
     let parsed;
-    try {
-      parsed = JSON.parse(editRubricJson);
-      setEditRubricValid(true);
-    } catch {
-      setEditRubricValid(false);
-      alert("Your rubric JSON is invalid. Please fix syntax errors.");
-      return;
-    }
+    try { parsed = JSON.parse(editRubricJson); setEditRubricValid(true); }
+    catch { setEditRubricValid(false); alert("Your rubric JSON is invalid."); return; }
     try {
       await api.patch(`/exams/${viewingExam.id}/`, { rubric: parsed });
       setEditingRubric(false);
@@ -498,41 +403,25 @@ function SectionExams({ exams, onUploadSuccess }) {
     }
   };
 
-  // ── If viewing an exam, show the exam detail panel ──
   if (viewingExam) {
     const pct = viewingExam.scripts > 0 ? Math.round((viewingExam.graded / viewingExam.scripts) * 100) : 0;
     return (
       <motion.div key="exam-view" {...sectionTransition}>
-        {/* Back button + header */}
         <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
-          <motion.button
-            onClick={closeViewExam}
-            whileHover={{ backgroundColor: T.surfaceHigh }}
-            whileTap={{ scale: 0.97 }}
-            style={{ display: "flex", alignItems: "center", gap: "6px", background: "none", border: `1px solid ${T.border}`, borderRadius: "8px", padding: "7px 14px", cursor: "pointer", color: T.text2, fontSize: "13px", fontFamily: "Geist, sans-serif" }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
+          <motion.button onClick={closeViewExam} whileHover={{ backgroundColor: T.surfaceHigh }} whileTap={{ scale: 0.97 }}
+            style={{ display: "flex", alignItems: "center", gap: "6px", background: "none", border: `1px solid ${T.border}`, borderRadius: "8px", padding: "7px 14px", cursor: "pointer", color: T.text2, fontSize: "13px", fontFamily: "Geist, sans-serif" }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
             Back to Exams
           </motion.button>
           <div>
             <div style={{ fontWeight: 700, fontSize: "17px", color: T.text1, letterSpacing: "-0.02em" }}>{viewingExam.title}</div>
-            <div style={{ fontSize: "11px", color: T.text3, fontFamily: "Geist Mono, monospace", marginTop: "2px" }}>
-              Uploaded {viewingExam.uploaded}
-            </div>
+            <div style={{ fontSize: "11px", color: T.text3, fontFamily: "Geist Mono, monospace", marginTop: "2px" }}>Uploaded {viewingExam.uploaded}</div>
           </div>
-          <div style={{ marginLeft: "auto" }}>
-            <StatusBadge status={viewingExam.status} />
-          </div>
+          <div style={{ marginLeft: "auto" }}><StatusBadge status={viewingExam.status} /></div>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "24px", alignItems: "start" }}>
-
-          {/* LEFT COLUMN */}
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-
-            {/* Stats row */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px" }}>
               {[
                 { label: "Scripts Uploaded", value: viewingExam.scripts, color: T.text1 },
@@ -546,7 +435,6 @@ function SectionExams({ exams, onUploadSuccess }) {
               ))}
             </div>
 
-            {/* Progress bar */}
             <div style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "12px", padding: "20px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
                 <span style={{ fontSize: "13px", fontWeight: 600, color: T.text1 }}>Grading Progress</span>
@@ -555,11 +443,10 @@ function SectionExams({ exams, onUploadSuccess }) {
               <ProgressBar pct={pct} color={pct >= 85 ? T.emerald : T.cyan} />
             </div>
 
-            {/* Upload more files */}
             <div style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "20px" }}>
               <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.1em", color: T.text3, fontFamily: "Geist Mono, monospace", marginBottom: "14px" }}>UPLOAD MORE SCRIPTS</div>
               <motion.div
-                onDragOver={(e) => { e.preventDefault(); }}
+                onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => { e.preventDefault(); addMoreFiles(e.dataTransfer.files); }}
                 onClick={() => moreFileInputRef.current?.click()}
                 whileHover={{ borderColor: T.cyan }}
@@ -570,8 +457,6 @@ function SectionExams({ exams, onUploadSuccess }) {
                 <div style={{ fontSize: "13px", color: T.text2, fontWeight: 500 }}>Drop PDFs to add more scripts</div>
                 <div style={{ fontSize: "11px", color: T.text3 }}>or <span style={{ color: T.cyan }}>browse</span> to select</div>
               </motion.div>
-
-              {/* more files list */}
               <AnimatePresence>
                 {moreFiles.map((f) => (
                   <motion.div key={f.id} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
@@ -583,8 +468,7 @@ function SectionExams({ exams, onUploadSuccess }) {
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                         <span style={{ fontSize: "11px", fontFamily: "Geist Mono, monospace", color: f.progress === 100 ? T.emerald : T.cyan }}>{f.progress}%</span>
-                        <motion.button onClick={() => setMoreFiles(p => p.filter(x => x.id !== f.id))}
-                          whileHover={{ color: T.red }} whileTap={{ scale: 0.9 }}
+                        <motion.button onClick={() => setMoreFiles(p => p.filter(x => x.id !== f.id))} whileHover={{ color: T.red }} whileTap={{ scale: 0.9 }}
                           style={{ background: "none", border: "none", cursor: "pointer", color: T.text3, display: "flex" }}>
                           <Ico.X />
                         </motion.button>
@@ -594,7 +478,6 @@ function SectionExams({ exams, onUploadSuccess }) {
                   </motion.div>
                 ))}
               </AnimatePresence>
-
               {moreFiles.length > 0 && (
                 <div style={{ marginTop: "14px" }}>
                   <MagBtn variant="primary" size="md" onClick={handleUploadMore} style={{ width: "100%", justifyContent: "center" }}>
@@ -604,7 +487,6 @@ function SectionExams({ exams, onUploadSuccess }) {
               )}
             </div>
 
-            {/* Change Rubric */}
             <div style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "20px" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
                 <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.1em", color: T.text3, fontFamily: "Geist Mono, monospace" }}>RUBRIC</div>
@@ -612,7 +494,6 @@ function SectionExams({ exams, onUploadSuccess }) {
                   {editingRubric ? "Cancel" : <><Ico.Edit />&nbsp;Change Rubric</>}
                 </MagBtn>
               </div>
-
               <AnimatePresence>
                 {!editingRubric ? (
                   <motion.div key="rubric-preview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -624,25 +505,20 @@ function SectionExams({ exams, onUploadSuccess }) {
                   </motion.div>
                 ) : (
                   <motion.div key="rubric-editor" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ ...SPRING_LG }} style={{ overflow: "hidden" }}>
-                    <textarea
-                      value={editRubricJson}
-                      onChange={(e) => { setEditRubricJson(e.target.value); setEditRubricValid(null); }}
+                    <textarea value={editRubricJson} onChange={(e) => { setEditRubricJson(e.target.value); setEditRubricValid(null); }}
                       style={{ width: "100%", minHeight: "220px", resize: "vertical", backgroundColor: T.surfaceHigh, border: `1px solid ${T.border}`, borderRadius: "8px", padding: "14px", color: T.text1, fontFamily: "Geist Mono, monospace", fontSize: "12px", lineHeight: 1.7, outline: "none", boxSizing: "border-box", transition: "border-color 0.2s" }}
                       onFocus={(e) => e.target.style.borderColor = T.cyan}
-                      onBlur={(e) => e.target.style.borderColor = T.border}
-                    />
+                      onBlur={(e) => e.target.style.borderColor = T.border} />
                     <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "10px" }}>
                       <MagBtn variant="primary" size="md" onClick={handleSaveRubric}>Save Rubric</MagBtn>
                       <AnimatePresence mode="wait">
                         {editRubricValid === true && (
-                          <motion.span key="ok" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            style={{ fontSize: "12px", color: T.emerald, display: "flex", alignItems: "center", gap: "5px" }}>
+                          <motion.span key="ok" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ fontSize: "12px", color: T.emerald, display: "flex", alignItems: "center", gap: "5px" }}>
                             <Ico.Check />&nbsp;Valid JSON
                           </motion.span>
                         )}
                         {editRubricValid === false && (
-                          <motion.span key="err" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            style={{ fontSize: "12px", color: T.red }}>
+                          <motion.span key="err" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ fontSize: "12px", color: T.red }}>
                             Parse error — check syntax
                           </motion.span>
                         )}
@@ -652,13 +528,9 @@ function SectionExams({ exams, onUploadSuccess }) {
                 )}
               </AnimatePresence>
             </div>
-
           </div>
 
-          {/* RIGHT COLUMN */}
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-
-            {/* Exam info card */}
             <div style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "20px" }}>
               <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.1em", color: T.text3, fontFamily: "Geist Mono, monospace", marginBottom: "14px" }}>EXAM INFO</div>
               {[
@@ -674,16 +546,13 @@ function SectionExams({ exams, onUploadSuccess }) {
               ))}
             </div>
 
-            {/* Remove exam */}
             <div style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "20px" }}>
               <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.1em", color: T.text3, fontFamily: "Geist Mono, monospace", marginBottom: "14px" }}>DANGER ZONE</div>
               <AnimatePresence mode="wait">
                 {!confirmRemove ? (
                   <motion.div key="remove-btn" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     <div style={{ fontSize: "12px", color: T.text3, marginBottom: "12px", lineHeight: 1.5 }}>Permanently remove this exam and all associated scripts and grades. This cannot be undone.</div>
-                    <MagBtn variant="danger" size="md" onClick={() => setConfirmRemove(true)} style={{ width: "100%", justifyContent: "center" }}>
-                      Remove Exam
-                    </MagBtn>
+                    <MagBtn variant="danger" size="md" onClick={() => setConfirmRemove(true)} style={{ width: "100%", justifyContent: "center" }}>Remove Exam</MagBtn>
                   </motion.div>
                 ) : (
                   <motion.div key="remove-confirm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -701,21 +570,16 @@ function SectionExams({ exams, onUploadSuccess }) {
                 )}
               </AnimatePresence>
             </div>
-
           </div>
         </div>
       </motion.div>
     );
   }
 
-  // ── Default: upload new exam layout ──
   return (
     <motion.div key="exams" {...sectionTransition}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: "24px", alignItems: "start" }}>
-
-        {/* LEFT */}
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          {/* drop zone */}
           <motion.div
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
@@ -723,12 +587,7 @@ function SectionExams({ exams, onUploadSuccess }) {
             onClick={() => fileRef.current?.click()}
             animate={{ scale: dragOver ? 1.01 : 1, borderColor: dragOver ? T.cyan : T.border, backgroundColor: dragOver ? T.cyanDim : "transparent" }}
             transition={{ ...SPRING }}
-            style={{
-              border: `2px dashed ${T.border}`, borderRadius: "16px",
-              padding: "48px 24px", display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center", gap: "12px",
-              cursor: "pointer", color: T.text3,
-            }}
+            style={{ border: `2px dashed ${T.border}`, borderRadius: "16px", padding: "48px 24px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "12px", cursor: "pointer", color: T.text3 }}
           >
             <input ref={fileRef} type="file" accept=".pdf" multiple style={{ display: "none" }} onChange={(e) => addFiles(e.target.files)} />
             <Ico.Upload />
@@ -736,14 +595,10 @@ function SectionExams({ exams, onUploadSuccess }) {
             <div style={{ fontSize: "12px", color: T.text3 }}>or <span style={{ color: T.cyan }}>browse</span> to select</div>
           </motion.div>
 
-          {/* file list */}
           <AnimatePresence>
             {files.map((f) => (
-              <motion.div
-                key={f.id}
-                initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-                style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "10px", padding: "14px 16px", display: "flex", flexDirection: "column", gap: "8px" }}
-              >
+              <motion.div key={f.id} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "10px", padding: "14px 16px", display: "flex", flexDirection: "column", gap: "8px" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div>
                     <div style={{ fontSize: "13px", color: T.text1, fontWeight: 500 }}>{f.name}</div>
@@ -751,8 +606,7 @@ function SectionExams({ exams, onUploadSuccess }) {
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                     <span style={{ fontSize: "11px", fontFamily: "Geist Mono, monospace", color: f.progress === 100 ? T.emerald : T.cyan }}>{f.progress}%</span>
-                    <motion.button onClick={() => setFiles(p => p.filter(x => x.id !== f.id))}
-                      whileHover={{ color: T.red }} whileTap={{ scale: 0.9 }}
+                    <motion.button onClick={() => setFiles(p => p.filter(x => x.id !== f.id))} whileHover={{ color: T.red }} whileTap={{ scale: 0.9 }}
                       style={{ background: "none", border: "none", cursor: "pointer", color: T.text3, display: "flex" }}>
                       <Ico.X />
                     </motion.button>
@@ -763,35 +617,22 @@ function SectionExams({ exams, onUploadSuccess }) {
             ))}
           </AnimatePresence>
 
-          {/* rubric editor */}
           <div style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "14px", padding: "20px" }}>
             <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.1em", color: T.text3, fontFamily: "Geist Mono, monospace", marginBottom: "12px" }}>RUBRIC DEFINITION</div>
-            <textarea
-              value={rubricJson}
-              onChange={(e) => { setRubricJson(e.target.value); setJsonValid(null); }}
-              style={{
-                width: "100%", minHeight: "220px", resize: "vertical",
-                backgroundColor: T.surfaceHigh, border: `1px solid ${T.border}`,
-                borderRadius: "8px", padding: "14px", color: T.text1,
-                fontFamily: "Geist Mono, monospace", fontSize: "12px", lineHeight: 1.7,
-                outline: "none", boxSizing: "border-box",
-                transition: "border-color 0.2s",
-              }}
+            <textarea value={rubricJson} onChange={(e) => { setRubricJson(e.target.value); setJsonValid(null); }}
+              style={{ width: "100%", minHeight: "220px", resize: "vertical", backgroundColor: T.surfaceHigh, border: `1px solid ${T.border}`, borderRadius: "8px", padding: "14px", color: T.text1, fontFamily: "Geist Mono, monospace", fontSize: "12px", lineHeight: 1.7, outline: "none", boxSizing: "border-box", transition: "border-color 0.2s" }}
               onFocus={(e) => e.target.style.borderColor = T.cyan}
-              onBlur={(e) => e.target.style.borderColor = T.border}
-            />
+              onBlur={(e) => e.target.style.borderColor = T.border} />
             <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "10px" }}>
               <MagBtn variant="ghost" size="md" onClick={validateJson}>Validate JSON</MagBtn>
               <AnimatePresence mode="wait">
                 {jsonValid === true && (
-                  <motion.span key="ok" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    style={{ fontSize: "12px", color: T.emerald, display: "flex", alignItems: "center", gap: "5px" }}>
+                  <motion.span key="ok" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ fontSize: "12px", color: T.emerald, display: "flex", alignItems: "center", gap: "5px" }}>
                     <Ico.Check />&nbsp;Valid JSON
                   </motion.span>
                 )}
                 {jsonValid === false && (
-                  <motion.span key="err" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    style={{ fontSize: "12px", color: T.red }}>
+                  <motion.span key="err" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ fontSize: "12px", color: T.red }}>
                     Parse error — check syntax
                   </motion.span>
                 )}
@@ -799,13 +640,11 @@ function SectionExams({ exams, onUploadSuccess }) {
             </div>
           </div>
 
-          {/* submit */}
           <MagBtn variant="primary" size="lg" onClick={handleUpload} style={{ width: "100%", justifyContent: "center" }}>
             {uploading ? <><LoadingSpinner />&nbsp;&nbsp;Processing…</> : "Upload & Start Grading"}
           </MagBtn>
         </div>
 
-        {/* RIGHT — uploaded exam list */}
         <div style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "14px", overflow: "hidden" }}>
           <div style={{ padding: "16px 20px", borderBottom: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ fontSize: "13px", fontWeight: 600, color: T.text1 }}>Uploaded Batches</span>
@@ -815,8 +654,7 @@ function SectionExams({ exams, onUploadSuccess }) {
             {exams.map((exam) => {
               const pct = exam.scripts > 0 ? Math.round((exam.graded / exam.scripts) * 100) : 0;
               return (
-                <motion.div key={exam.id} variants={rowItem}
-                  style={{ padding: "14px", borderRadius: "10px", marginBottom: "8px", backgroundColor: T.surfaceHigh }}>
+                <motion.div key={exam.id} variants={rowItem} style={{ padding: "14px", borderRadius: "10px", marginBottom: "8px", backgroundColor: T.surfaceHigh }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
                     <div>
                       <div style={{ fontSize: "12.5px", fontWeight: 600, color: T.text1, marginBottom: "2px" }}>{exam.title}</div>
@@ -835,9 +673,7 @@ function SectionExams({ exams, onUploadSuccess }) {
               );
             })}
             {exams.length === 0 && (
-              <div style={{ padding: "24px", textAlign: "center", fontSize: "13px", color: T.text3 }}>
-                No exams uploaded yet
-              </div>
+              <div style={{ padding: "24px", textAlign: "center", fontSize: "13px", color: T.text3 }}>No exams uploaded yet</div>
             )}
           </motion.div>
         </div>
@@ -847,57 +683,43 @@ function SectionExams({ exams, onUploadSuccess }) {
 }
 
 /* 
-   SECTION 4 — GRADES
+   SECTION 3 — GRADES
  */
 function SectionGrades() {
   const [search, setSearch] = useState("");
-  const { user } = useContext(UserContext)
-  const [grades, setGrades] = useState([])
-  const [loadingGrades, setLoadingGrades] = useState(false)
+  const { user } = useContext(UserContext);
+  const [grades, setGrades] = useState([]);
 
   const fetchGrades = useCallback(async () => {
     if (!user) return;
     try {
-      setLoadingGrades(true);
       const response = await api.get('/upload/instructor_exams');
-      const data = response.data;
-      setGrades(data && data.length > 0 ? data : MOCK_GRADES);
+      setGrades(response.data ?? []);
     } catch (err) {
-      console.error("Failed to fetch exams", err);
-      setGrades(MOCK_GRADES);
-    } finally {
-      setLoadingGrades(false);
+      console.error("Failed to fetch grades", err);
+      setGrades([]);
     }
   }, [user]);
 
-  useEffect(() => {
-    fetchGrades();
-  }, [fetchGrades]);
+  useEffect(() => { fetchGrades(); }, [fetchGrades]);
 
   const filtered = grades.filter(g =>
     g.id.toLowerCase().includes(search.toLowerCase()) ||
     g.exam.toLowerCase().includes(search.toLowerCase())
   );
 
-
-
   return (
     <motion.div key="grades" {...sectionTransition}>
-      {/* search bar */}
       <div style={{ marginBottom: "20px" }}>
         <div style={{ position: "relative", maxWidth: "400px" }}>
           <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: T.text3, pointerEvents: "none" }}><Ico.Search /></span>
-          <input
-            placeholder="Search student ID or exam…"
-            value={search} onChange={(e) => setSearch(e.target.value)}
+          <input placeholder="Search student ID or exam…" value={search} onChange={(e) => setSearch(e.target.value)}
             style={{ width: "100%", backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "8px", padding: "9px 12px 9px 36px", color: T.text1, fontFamily: "Geist, sans-serif", fontSize: "13px", outline: "none", boxSizing: "border-box", transition: "border-color 0.2s" }}
             onFocus={(e) => e.target.style.borderColor = T.cyan}
-            onBlur={(e) => e.target.style.borderColor = T.border}
-          />
+            onBlur={(e) => e.target.style.borderColor = T.border} />
         </div>
       </div>
 
-      {/* grades table */}
       <div style={{ backgroundColor: T.surface, border: `1px solid ${T.border}`, borderRadius: "14px", overflow: "hidden" }}>
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -910,11 +732,9 @@ function SectionGrades() {
             </thead>
             <motion.tbody variants={rowStagger} initial="hidden" animate="visible">
               {filtered.map((g) => {
-                const pct = Math.round((g.score / g.max) * 100);
+                const pct = g.max > 0 ? Math.round((g.score / g.max) * 100) : 0;
                 return (
-                  <motion.tr key={g.id} variants={rowItem}
-                    whileHover={{ backgroundColor: T.surfaceHigh }}
-                    style={{ transition: "background-color 0.15s" }}>
+                  <motion.tr key={`${g.id}-${g.exam}`} variants={rowItem} whileHover={{ backgroundColor: T.surfaceHigh }} style={{ transition: "background-color 0.15s" }}>
                     <td style={{ padding: "13px 20px", fontFamily: "Geist Mono, monospace", fontSize: "12.5px", color: T.cyan }}>{g.id}</td>
                     <td style={{ padding: "13px 20px", fontSize: "13px", color: T.text2 }}>{g.exam}</td>
                     <td style={{ padding: "13px 20px", fontFamily: "Geist Mono, monospace", fontSize: "13px", color: T.text1, fontWeight: 600 }}>{g.score}</td>
@@ -937,7 +757,7 @@ function SectionGrades() {
 }
 
 /* 
-   SECTION TITLES
+   SECTION ROUTING
  */
 const SECTION_META = {
   overview: { title: "Overview", sub: "Your grading workspace at a glance" },
@@ -957,10 +777,9 @@ const PATH_TO_SECTION = {
 export default function InstructorDashboard() {
   const navigate = useNavigate();
   const { user } = useContext(UserContext);
-  const { isMobile, isTablet } = useBreakpoint();
+  const { isMobile } = useBreakpoint();
   const [activeRoute, setActiveRoute] = useState("/instructor");
   const [exams, setExams] = useState([]);
-  const [loadingExams, setLoadingExams] = useState(true);
 
   const section = PATH_TO_SECTION[activeRoute] || "overview";
   const meta = SECTION_META[section];
@@ -970,30 +789,18 @@ export default function InstructorDashboard() {
     if (user.role !== "instructor") navigate("/ta", { replace: true });
   }, [user, navigate]);
 
-  useEffect(() => {
-    if (!user) return;
-  }, [user]);
-
   const fetchExams = useCallback(async () => {
     if (!user) return;
     try {
-      setLoadingExams(true);
       const response = await api.get('/exams/');
-      const data = response.data;
-      setExams(data && data.length > 0 ? data : MOCK_EXAMS);
+      setExams(response.data ?? []);
     } catch (err) {
       console.error("Failed to fetch exams", err);
-      setExams(MOCK_EXAMS);
-    } finally {
-      setLoadingExams(false);
+      setExams([]);
     }
   }, [user]);
 
-  useEffect(() => {
-    fetchExams();
-  }, [fetchExams]);
-
-  const sidebarW = 220;
+  useEffect(() => { fetchExams(); }, [fetchExams]);
 
   const handleNavigate = (path) => {
     setActiveRoute(path);
@@ -1004,8 +811,7 @@ export default function InstructorDashboard() {
     <div style={{ display: "flex", minHeight: "100dvh", backgroundColor: T.bg, fontFamily: "Geist, sans-serif" }}>
       <Sidebar activeRoute={activeRoute} onNavigate={handleNavigate} />
 
-      <div style={{ flex: 1, marginLeft: sidebarW, display: "flex", flexDirection: "column", minHeight: "100dvh", overflow: "hidden" }}>
-
+      <div style={{ flex: 1, marginLeft: 220, display: "flex", flexDirection: "column", minHeight: "100dvh", overflow: "hidden" }}>
         <div style={{
           height: "56px", backgroundColor: T.surface, borderBottom: `1px solid ${T.border}`,
           display: "flex", alignItems: "center", justifyContent: "space-between",

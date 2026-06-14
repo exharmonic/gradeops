@@ -241,7 +241,6 @@ function Hero({ onAuth }) {
           </p>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", pointerEvents: "all" }}>
             <MagBtn onClick={onAuth} variant="primary" size="lg">Request access <Arrow /></MagBtn>
-            <MagBtn variant="white" size="lg">View architecture</MagBtn>
           </div>
         </HeroPanel>
       </section>
