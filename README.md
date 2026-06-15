@@ -10,6 +10,7 @@ The two projects were developed separately and combined here with their full com
 gradeops/
 ├── frontend/     React dashboards for instructors and teaching assistants
 ├── backend/      FastAPI grading engine and REST API
+├── .gitignore
 └── README.md     You are here
 ```
 
@@ -42,7 +43,7 @@ A typical exam flows through the system like this. An instructor creates an exam
 **Backend**
 * FastAPI on Python
 * LangGraph for the grading state machine, with LangChain provider integrations
-* Google Gemini for rubric scoring and NVIDIA Nemotron (via OpenRouter) for OCR
+* Google Gemini for rubric scoring and for OCR (separate)
 * PostgreSQL for application data and SQLite for LangGraph checkpoints
 * SQLAlchemy as the ORM, PyJWT and pwdlib for auth, and PyMuPDF for reading PDFs
 
@@ -62,8 +63,6 @@ python -m venv .venv
 source .venv/bin/activate
 
 pip install -r requirements.txt
-# If the AI packages are not pinned yet, also install:
-pip install langgraph langgraph-checkpoint-sqlite langchain-google-genai langchain-openai
 ```
 
 Copy `.env.example` to `.env` and fill in your PostgreSQL credentials, a secret key (`openssl rand -hex 32`), your model API keys, and `COOKIE_SECURE="false"` for local development. Create the database:
