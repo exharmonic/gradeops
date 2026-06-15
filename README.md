@@ -1,50 +1,105 @@
 # GradeOps
- 
-> AI-powered Human-in-the-Loop exam grading platform for handwritten scripts.
- 
-GradeOps eliminates the bottleneck of manual exam grading by pairing Vision-Language Models with an agentic LLM pipeline to read handwritten answers, score them against structured rubrics, and route every decision through a human review step before any grade is finalized.
- 
-## What it does
- 
-- Instructors upload bulk PDF exam scans and define granular JSON rubrics
-- A Vision-Language Model extracts handwritten answers with LaTeX-aware OCR
-- Google Gemini scores each answer against the rubric, awarding partial credit with per-criterion justifications
-- A LangGraph state machine pauses the pipeline and queues results for Teaching Assistant review
-- TAs approve, override, or flag decisions through a keyboard-driven review dashboard
-- A cosine similarity + LLM filter automatically detects and flags suspiciously similar answers across submissions
-## Repository structure
- 
+
+GradeOps is an AI assisted platform for grading handwritten exams. It reads scanned scripts with a vision language model, scores each answer against a structured rubric with a second model, and then routes every result through a human reviewer before grades are released. This repository is a monorepo that holds both halves of the system: the React frontend and the FastAPI backend.
+
+The two projects were developed separately and combined here with their full commit histories preserved, each under its own top level directory.
+
+## Repository Layout
+
 ```
 gradeops/
-├── backend/     FastAPI grading engine — LangGraph pipeline, OCR, Gemini grader, plagiarism check
-├── frontend/    React dashboard — Instructor portal, TA review queue, keyboard shortcuts
-└── README.md
+├── frontend/     React dashboards for instructors and teaching assistants
+├── backend/      FastAPI grading engine and REST API
+└── README.md     You are here
 ```
- 
-## Tech stack
- 
-| Layer | Technology |
-|---|---|
-| Backend | FastAPI, Python |
-| AI pipeline | LangGraph, LangChain |
-| OCR | Gemini Vision (gemini-flash) |
-| Grading | Google Gemini |
-| Plagiarism | Gemini Embeddings + cosine similarity |
-| Database | PostgreSQL (app data), SQLite (LangGraph checkpoints) |
-| Frontend | React 19, Vite, Framer Motion, Three.js |
-| Auth | JWT, httponly cookies |
- 
-## Original repositories
- 
-- Backend: [gradeops-backend](https://github.com/exharmonic/gradeops-backend)
-- Frontend: [gradeops-frontend](https://github.com/exharmonic/gradeops-frontend)
 
-## Getting started
+Each project keeps its own detailed README:
+
+* Frontend setup and architecture: [`frontend/README.md`](frontend/README.md)
+* Backend setup and architecture: [`backend/README.md`](backend/README.md)
+
+## How It Works
+
+A typical exam flows through the system like this. An instructor creates an exam with a rubric and uploads the student scripts as PDFs. The backend reads each script with NVIDIA Nemotron for OCR, then passes the extracted answers to Google Gemini, which scores them against the rubric and produces structured feedback with a confidence reading. LangGraph orchestrates this pipeline as a state machine, and when a script is ready for human judgment it pauses and saves its state to disk. A teaching assistant then opens the review queue in the frontend, where each answer is shown alongside its rubric, the AI score, and the reasoning. The reviewer approves, overrides, or flags each one, and the finalized result is written back. Once review is complete, the instructor releases the grades.
+
+## Architecture at a Glance
+
+**Frontend.** A React application built with Vite. It provides a public landing page, authentication, an instructor portal for exams, uploads, rubrics, and grades, and a teaching assistant portal centered on a fast, keyboard friendly review queue. Styling is driven entirely by a shared design token file, and motion is handled through a small set of reusable presets. The interface talks to the backend through a single Axios client that carries the session cookie.
+
+**Backend.** A FastAPI service that exposes the REST API and runs the grading pipeline. It combines a two stage AI workflow, role based access control with httponly cookie sessions, a LangGraph state machine that persists its queue through SQLite, asynchronous background processing for the heavy model work, and a relational data layer on PostgreSQL through SQLAlchemy.
+
+## Tech Stack
+
+**Frontend**
+* React 19 with Vite 8
+* React Router v7 for client side routing and role based guards
+* Axios for API calls, configured to send the session cookie
+* Framer Motion for animation
+* Three.js through @react-three/fiber and drei for the landing visuals
+* Bootstrap, React Bootstrap, and react-pro-sidebar
+* Inline styles driven by a custom token system
+
+**Backend**
+* FastAPI on Python
+* LangGraph for the grading state machine, with LangChain provider integrations
+* Google Gemini for rubric scoring and NVIDIA Nemotron (via OpenRouter) for OCR
+* PostgreSQL for application data and SQLite for LangGraph checkpoints
+* SQLAlchemy as the ORM, PyJWT and pwdlib for auth, and PyMuPDF for reading PDFs
+
+## Quick Start
+
+You will run the two services side by side: the backend on port 8000 and the frontend on port 5173.
+
+### 1. Start the backend
 
 ```bash
-git clone https://github.com/exharmonic/gradeops
+cd backend
+python -m venv .venv
+
+# Windows
+.venv\Scripts\activate
+# macOS and Linux
+source .venv/bin/activate
+
+pip install -r requirements.txt
+# If the AI packages are not pinned yet, also install:
+pip install langgraph langgraph-checkpoint-sqlite langchain-google-genai langchain-openai
 ```
 
-Then follow the setup guide for each service:
-- [Backend setup](backend/README.md) — FastAPI server, database, and API keys
-- [Frontend setup](frontend/README.md) — React dev server and Axios configuration
+Copy `.env.example` to `.env` and fill in your PostgreSQL credentials, a secret key (`openssl rand -hex 32`), your model API keys, and `COOKIE_SECURE="false"` for local development. Create the database:
+
+```sql
+CREATE DATABASE gradeops_db;
+```
+
+Then run the server:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+The API is available at http://localhost:8000, with interactive docs at http://localhost:8000/docs.
+
+### 2. Start the frontend
+
+In a second terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The app runs at http://localhost:5173.
+
+> Open the app through `localhost`, not `127.0.0.1`. The backend's CORS policy and the session cookie are bound to the `localhost` origin, and the browser treats `127.0.0.1` as a different origin. Using `127.0.0.1` will block API requests and prevent the login cookie from being sent.
+
+## Development Notes
+
+* The frontend and backend are independent applications that communicate over HTTP. Run both for a complete local environment.
+* Auth is cookie based. The backend issues an httponly session cookie on login, and the frontend sends it automatically. For this to work over plain HTTP in development, keep `COOKIE_SECURE="false"` in the backend environment.
+* The LangGraph review queue is persisted to `checkpoints.db` (SQLite), so pending reviews survive server restarts.
+
+## Further Reading
+
+For full details, including the complete feature set, design system, data shapes, and endpoint reference, see the per project READMEs in [`frontend/`](frontend/README.md) and [`backend/`](backend/README.md).
