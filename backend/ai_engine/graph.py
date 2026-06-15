@@ -95,14 +95,8 @@ class GradingState(TypedDict):
 
 # NODES
 async def run_nemotron_ocr_node(state: GradingState):
-    print("--- [NODE 1] EXECUTING MULTIMODAL OCR VIA NEMOTRON ---")
+    print("--- [NODE 1] EXECUTING MULTIMODAL OCR VIA GEMINI ---")
 
-    # nemotron_vlm = ChatOpenAI(
-    #     api_key=os.getenv("OPENROUTER_API_KEY"),
-    #     model="nvidia/nemotron-nano-12b-v2-vl:free",
-    #     base_url="https://openrouter.ai/api/v1",
-    #     max_completion_tokens=2000,
-    # )
     gemini_vlm = ChatGoogleGenerativeAI(
         model="gemini-3.1-flash-lite",
         temperature=0.0,
