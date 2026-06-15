@@ -38,6 +38,13 @@ gradeops/
  
 - Backend: [gradeops-backend](https://github.com/exharmonic/gradeops-backend)
 - Frontend: [gradeops-frontend](https://github.com/exharmonic/gradeops-frontend)
+
 ## Getting started
- 
-See `backend/README.md` and `frontend/README.md` for setup instructions for each service.
+
+```bash
+git clone https://github.com/exharmonic/gradeops
+```
+
+Then follow the setup guide for each service:
+- [Backend setup](backend/README.md) — FastAPI server, database, and API keys
+- [Frontend setup](frontend/README.md) — React dev server and Axios configuration
