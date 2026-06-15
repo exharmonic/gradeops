@@ -1,5 +1,8 @@
 # GradeOps
 
+
+<img width="400" height="60" alt="Screen Recording 2026-06-15 115048" src="https://github.com/user-attachments/assets/dcefeea0-19fc-4fb7-b35b-aebda57ec98f" />
+
 GradeOps is an AI assisted platform for grading handwritten exams. It reads scanned scripts with a vision language model, scores each answer against a structured rubric with a second model, and then routes every result through a human reviewer before grades are released. This repository is a monorepo that holds both halves of the system: the React frontend and the FastAPI backend.
 
 The two projects were developed separately and combined here with their full commit histories preserved, each under its own top level directory.
