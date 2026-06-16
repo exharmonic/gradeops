@@ -31,7 +31,8 @@ A typical exam flows through the system like this. An instructor creates an exam
 
 **Frontend.** A React application built with Vite. It provides a public landing page, authentication, an instructor portal for exams, uploads, rubrics, and grades, and a teaching assistant portal centered on a fast, keyboard friendly review queue. Styling is driven entirely by a shared design token file, and motion is handled through a small set of reusable presets. The interface talks to the backend through a single Axios client that carries the session cookie.
 
-**Backend.** A FastAPI service that exposes the REST API and runs the grading pipeline. It combines a two stage AI workflow, role based access control with httponly cookie sessions, a LangGraph state machine that persists its queue through SQLite, asynchronous background processing for the heavy model work, and a relational data layer on PostgreSQL through SQLAlchemy.
+**Backend.** A FastAPI REST API driving an asynchronous grading pipeline. At its core is a LangGraph state machine orchestrating concurrent Gemini OCR, structured rubric scoring, and a human-in-the-loop pause via an `aiosqlite` checkpointer. Exam completions trigger a background Map-Reduce similarity engine (vector embeddings + LLM) to flag plagiarism. Application data is persisted in PostgreSQL, secured by role-based HTTP-only cookie sessions.
+
 
 ## Tech Stack
 
