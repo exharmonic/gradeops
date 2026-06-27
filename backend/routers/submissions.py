@@ -54,8 +54,8 @@ def upload_files(
             status_code=status.HTTP_400_BAD_REQUEST, detail="No such exam found."
         )
 
-    exam_base_folder = f"uploads/exams/exam_{exam_id}"
-    required_folders = [f"{exam_base_folder}/pdfs", f"{exam_base_folder}/images"]
+    exam_base_folder = os.path.join("uploads", "exams", f"exam_{exam_id}")
+    required_folders = [os.path.join(exam_base_folder, "pdfs"), os.path.join(exam_base_folder, "images")]
 
     for path in required_folders:
         os.makedirs(path, exist_ok=True)
@@ -69,8 +69,8 @@ def upload_files(
             safe_name = secure_filename(file.filename)
             student_id = safe_name.rsplit(".", 1)[0]
 
-            pdf_destination = f"{required_folders[0]}/{safe_name}"
-            imgs_destination = f"{required_folders[1]}/{student_id}"
+            pdf_destination = os.path.join(required_folders[0], safe_name)
+            imgs_destination = os.path.join(required_folders[1], str(student_id))
 
             existing_submission = (
                 db.query(models.Submission)

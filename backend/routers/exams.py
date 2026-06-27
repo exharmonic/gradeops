@@ -219,7 +219,7 @@ async def delete_exam(
             status_code=status.HTTP_404_NOT_FOUND, detail="No exam found"
         )
 
-    exam_base_folder = f"uploads/exams/exam_{exam_id}"
+    exam_base_folder = os.path.join("uploads", "exams", f"exam_{exam_id}")
     if os.path.exists(exam_base_folder):
         try:
             shutil.rmtree(exam_base_folder)
@@ -246,7 +246,8 @@ async def get_exam_review_queue(exam_id: int, db: Session = Depends(get_db)):
 
     master_queue = []
 
-    flag_file = f"uploads/exams/exam_{exam_id}/plagiarism.json"
+    exam_base_folder = os.path.join("uploads", "exams", f"exam_{exam_id}")
+    flag_file = os.path.join(exam_base_folder, "plagiarism.json")
     plagiarism_data = {}
     if os.path.exists(flag_file):
         with open(flag_file, "r") as f:
